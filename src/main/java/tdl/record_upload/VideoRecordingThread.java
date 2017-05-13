@@ -1,4 +1,4 @@
-package tdl.recordupload;
+package tdl.record_upload;
 
 import lombok.extern.slf4j.Slf4j;
 import tdl.record.image.input.InputFromScreen;
@@ -8,6 +8,7 @@ import tdl.record.utils.ImageQualityHint;
 import tdl.record.video.VideoRecorder;
 import tdl.record.video.VideoRecorderException;
 
+import java.io.File;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Timer;
@@ -18,11 +19,11 @@ public class VideoRecordingThread extends Thread {
     private static final Duration MAX_RECORDING_DURATION = Duration.of(12, ChronoUnit.HOURS);
 
     private final VideoRecorder videoRecorder;
-    private String recordingFile;
+    private File recordingFile;
     private final RecordingMetricsCollector recordingMetricsCollector;
     private final Timer timer;
 
-    VideoRecordingThread(String recordingFile) {
+    VideoRecordingThread(File recordingFile) {
         super("Recorder");
         this.recordingFile = recordingFile;
 
@@ -51,7 +52,7 @@ public class VideoRecordingThread extends Thread {
         scheduleMetricsTask();
 
         try {
-            videoRecorder.open(recordingFile, 4, 4);
+            videoRecorder.open(recordingFile.getAbsolutePath(), 4, 4);
             videoRecorder.start(MAX_RECORDING_DURATION);
             videoRecorder.close();
             timer.cancel();

@@ -1,4 +1,4 @@
-package tdl.recordupload;
+package tdl.record_upload;
 
 import tdl.s3.RemoteSync;
 import tdl.s3.cli.ProgressStatus;
@@ -21,6 +21,7 @@ class BackgroundRemoteSyncTask {
     BackgroundRemoteSyncTask(String configFilePath, String localStorageFolder) {
         Filters filters = Filters.getBuilder()
                 .include(Filters.endsWith(".mp4"))
+                .include(Filters.endsWith(".log"))
                 .create();
         Source localFolder = Source.getBuilder(Paths.get(localStorageFolder))
                 .setFilters(filters)

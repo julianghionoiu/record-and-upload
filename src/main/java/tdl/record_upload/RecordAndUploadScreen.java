@@ -1,9 +1,14 @@
-package tdl.recordupload;
+package tdl.record_upload;
 
+import ch.qos.logback.classic.LoggerContext;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.LoggerFactory;
+import tdl.record_upload.logging.LockableFileLoggingAppender;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -24,25 +29,37 @@ public class RecordAndUploadScreen {
         log.info("Starting recording app");
         RecordAndUploadScreen main = new RecordAndUploadScreen();
         new JCommander(main, args);
+
+        createMissingParentDirectories(main.localStorageFolder);
+        startFileLogging(main.localStorageFolder);
+
         main.run();
     }
 
+    private static void startFileLogging(String localStorageFolder) {
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        LockableFileLoggingAppender.addToContext(loggerContext, localStorageFolder);
+    }
+
+    private static void stopFileLogging() {
+        LoggerContext loggerContext = (LoggerContext)LoggerFactory.getILoggerFactory();
+        LockableFileLoggingAppender.removeFromContext(loggerContext);
+    }
+
     private void run() throws Exception {
-        // Prepare the source folder
-
-
-        // Configure the workers
-        BackgroundRemoteSyncTask remoteSyncTask = new BackgroundRemoteSyncTask(configFile, localStorageFolder);
-        String recordingFile = Paths.get(localStorageFolder, "recording.mp4").toAbsolutePath().toString();
+        // Start the recording
+        File recordingFile = Paths.get(localStorageFolder, "recording.mp4").toFile();
         VideoRecordingThread videoRecordingThread = new VideoRecordingThread(recordingFile);
-
-        // Start
-        remoteSyncTask.scheduleSyncEvery(Duration.of(5, ChronoUnit.MINUTES));
         videoRecordingThread.start();
+
+        // Start sync folder
+        BackgroundRemoteSyncTask remoteSyncTask = new BackgroundRemoteSyncTask(configFile, localStorageFolder);
+        remoteSyncTask.scheduleSyncEvery(Duration.of(5, ChronoUnit.MINUTES));
 
         // Stop gracefully
         registerShutdownHook(videoRecordingThread);
         videoRecordingThread.join();
+        stopFileLogging();
         remoteSyncTask.finalRun();
     }
 
@@ -57,5 +74,20 @@ public class RecordAndUploadScreen {
                 log.warn("Could not join main thread", e);
             }
         }, "ShutdownHook"));
+    }
+
+
+    // ~~~~~ Helpers
+
+    private static void createMissingParentDirectories(String storageFolder) throws IOException {
+        File folder = new File(storageFolder);
+        if (folder.exists()) {
+            return;
+        }
+
+        boolean folderCreated = folder.mkdirs();
+        if(!folderCreated) {
+            throw new IOException("Failed to created storage folder");
+        }
     }
 }

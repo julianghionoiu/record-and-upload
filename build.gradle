@@ -65,7 +65,7 @@ dependencies {
 
 apply plugin: 'us.kirchmeier.capsule'
 
-mainClassName = "tdl.recordupload.RecordAndUploadScreen"
+mainClassName = "tdl.record_upload.RecordAndUploadScreen"
 jar {
     manifest {
         attributes "Main-Class": "$mainClassName"
