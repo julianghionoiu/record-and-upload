@@ -24,6 +24,9 @@ sourceCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
     jcenter()
+
+    //TODO remove when we have real libraries
+    mavenLocal()
 }
 
 /**
@@ -42,8 +45,8 @@ ext {
 }
 
 dependencies {
-    compile 'ro.ghionoiu:dev-screen-record:0.0.3'
-    compile 'ro.ghionoiu:s3-sync-stream:0.0.5'
+    compile 'ro.ghionoiu:dev-screen-record:0.0.4-SNAPSHOT'
+    compile 'ro.ghionoiu:s3-sync-stream:0.0.6-SNAPSHOT'
     compile 'com.beust:jcommander:1.64'
 
     compile 'org.slf4j:slf4j-api:1.7.25'
@@ -62,7 +65,7 @@ dependencies {
 
 apply plugin: 'us.kirchmeier.capsule'
 
-mainClassName = "tdl.record.ScreenRecorderCliApp"
+mainClassName = "tdl.recordupload.RecordAndUploadScreen"
 jar {
     manifest {
         attributes "Main-Class": "$mainClassName"
@@ -73,7 +76,12 @@ task mavenCapsule(type: MavenCapsule){
     applicationClass mainClassName
 
     capsuleManifest {
+        minJavaVersion = '1.8.0'
         dependencyConfiguration configurations.compile
+        repositories << 'jcenter'
+
+        //TODO remove when we have real libraries
+        repositories << 'local'
 
         //noinspection GroovyAssignabilityCheck
         platform('windows'){
