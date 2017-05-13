@@ -9,6 +9,8 @@ import tdl.record_upload.logging.LockableFileLoggingAppender;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -31,19 +33,10 @@ public class RecordAndUploadScreen {
         new JCommander(main, args);
 
         createMissingParentDirectories(main.localStorageFolder);
+        removeOldLocks(main.localStorageFolder);
         startFileLogging(main.localStorageFolder);
 
         main.run();
-    }
-
-    private static void startFileLogging(String localStorageFolder) {
-        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        LockableFileLoggingAppender.addToContext(loggerContext, localStorageFolder);
-    }
-
-    private static void stopFileLogging() {
-        LoggerContext loggerContext = (LoggerContext)LoggerFactory.getILoggerFactory();
-        LockableFileLoggingAppender.removeFromContext(loggerContext);
     }
 
     private void run() throws Exception {
@@ -63,7 +56,6 @@ public class RecordAndUploadScreen {
         remoteSyncTask.finalRun();
     }
 
-
     private void registerShutdownHook(final VideoRecordingThread videoRecordingThread) {
         final Thread mainThread = Thread.currentThread();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -76,8 +68,19 @@ public class RecordAndUploadScreen {
         }, "ShutdownHook"));
     }
 
-
     // ~~~~~ Helpers
+
+    private static void startFileLogging(String localStorageFolder) {
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        LockableFileLoggingAppender.addToContext(loggerContext, localStorageFolder);
+    }
+
+
+    private static void stopFileLogging() {
+        LoggerContext loggerContext = (LoggerContext)LoggerFactory.getILoggerFactory();
+        LockableFileLoggingAppender.removeFromContext(loggerContext);
+    }
+
 
     private static void createMissingParentDirectories(String storageFolder) throws IOException {
         File folder = new File(storageFolder);
@@ -88,6 +91,19 @@ public class RecordAndUploadScreen {
         boolean folderCreated = folder.mkdirs();
         if(!folderCreated) {
             throw new IOException("Failed to created storage folder");
+        }
+    }
+
+    private static void removeOldLocks(String localStorageFolder) {
+        Path rootPath = Paths.get(localStorageFolder);
+        try {
+            //noinspection ResultOfMethodCallIgnored
+            Files.walk(rootPath)
+                    .filter(path -> path.getFileName().toString().endsWith(".lock"))
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+        } catch (IOException e) {
+            log.error("Failed to clean old locks", e);
         }
     }
 }
