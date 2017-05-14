@@ -24,7 +24,7 @@ public class VideoRecordingThread extends Thread {
     private final Timer timer;
 
     VideoRecordingThread(File recordingFile) {
-        super("Recorder");
+        super("RecordThread");
         this.recordingFile = recordingFile;
 
         recordingMetricsCollector = new RecordingMetricsCollector();
@@ -33,7 +33,7 @@ public class VideoRecordingThread extends Thread {
                 .withRecordingListener(recordingMetricsCollector)
                 .build();
 
-        timer = new Timer("RecordTask");
+        timer = new Timer("RecordMetrics");
     }
 
     void scheduleVideoMetricsEvery(Duration delayBetweenRuns) {

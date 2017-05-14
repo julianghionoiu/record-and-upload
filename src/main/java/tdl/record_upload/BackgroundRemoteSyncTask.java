@@ -19,7 +19,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 class BackgroundRemoteSyncTask {
-    private final Timer timer;
+    private final Timer syncTimer;
+    private final Timer metricsTimer;
     private Lock syncLock;
     private final RemoteSync remoteSync;
     private final UploadStatsProgressListener uploadStatsProgressListener;
@@ -40,12 +41,13 @@ class BackgroundRemoteSyncTask {
         uploadStatsProgressListener = new UploadStatsProgressListener();
         remoteSync.setListener(uploadStatsProgressListener);
 
-        timer = new Timer("SyncTask");
+        syncTimer = new Timer("UploadTask");
+        metricsTimer = new Timer("UploadMetrics");
         syncLock = new ReentrantLock();
     }
 
     void scheduleSyncEvery(Duration delayBetweenRuns) {
-        timer.schedule(new TimerTask() {
+        syncTimer.schedule(new TimerTask() {
             @Override
             public void run() {
                 boolean shouldSync = syncLock.tryLock();
@@ -73,7 +75,7 @@ class BackgroundRemoteSyncTask {
         uploadSpeedFormatter.setMinimumFractionDigits(1);
     }
     void scheduleUploadMetricsEvery(Duration delayBetweenRuns) {
-        timer.schedule(new TimerTask() {
+        metricsTimer.schedule(new TimerTask() {
             @Override
             public void run() {
                 uploadStatsProgressListener.getCurrentStats().ifPresent(fileUploadStat -> log.info("Uploaded : "
@@ -91,11 +93,13 @@ class BackgroundRemoteSyncTask {
     void finalRun() {
         log.info("Upload remaining parts and finalise video");
         syncLock.lock();
-        timer.cancel();
+        syncTimer.cancel();
         try {
             remoteSync.run();
         } catch (RemoteSyncException e) {
             log.error("File upload failed. Some files might not have been uploaded.");
+        } finally {
+            metricsTimer.cancel();
         }
     }
 }
