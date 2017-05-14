@@ -1,10 +1,13 @@
 package tdl.record_upload;
 
-import tdl.s3.RemoteSync;
+import lombok.extern.slf4j.Slf4j;
+import tdl.s3.sync.RemoteSync;
 import tdl.s3.cli.ProgressStatus;
-import tdl.s3.sync.Destination;
+import tdl.s3.sync.RemoteSyncException;
+import tdl.s3.sync.destination.Destination;
 import tdl.s3.sync.Filters;
 import tdl.s3.sync.Source;
+import tdl.s3.sync.destination.S3BucketDestination;
 
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -13,6 +16,7 @@ import java.util.TimerTask;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+@Slf4j
 class BackgroundRemoteSyncTask {
     private final Timer timer;
     private Lock syncLock;
@@ -26,7 +30,7 @@ class BackgroundRemoteSyncTask {
         Source localFolder = Source.getBuilder(Paths.get(localStorageFolder))
                 .setFilters(filters)
                 .create();
-        Destination s3Bucket = Destination.getBuilder()
+        Destination s3Bucket = S3BucketDestination.getBuilder()
                 .loadFromPath(Paths.get(configFilePath))
                 .create();
 
@@ -45,22 +49,28 @@ class BackgroundRemoteSyncTask {
                 boolean shouldSync = syncLock.tryLock();
                 if (shouldSync) {
                     try {
-                        System.out.println("Sync with remote");
+                        log.info("Sync local files with remote");
                         remoteSync.run();
+                    } catch (Exception e) {
+                        log.warn("Remote sync failed. Will retry later.", e);
                     } finally {
                         syncLock.unlock();
                     }
                 } else {
-                    System.out.println("Sync already in progress.");
+                    log.info("Sync already in progress. Skipping");
                 }
             }
         }, 0, delayBetweenRuns.toMillis());
     }
 
     void finalRun() {
-        System.out.println("Upload remaining parts and finalise video.");
+        log.info("Upload remaining parts and finalise video");
         syncLock.lock();
         timer.cancel();
-        remoteSync.run();
+        try {
+            remoteSync.run();
+        } catch (RemoteSyncException e) {
+            log.error("File upload failed. Some files might not have been uploaded.");
+        }
     }
 }

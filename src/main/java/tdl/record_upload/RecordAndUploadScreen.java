@@ -27,16 +27,20 @@ public class RecordAndUploadScreen {
     private String configFile = ".private/aws-test-secrets";
 
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args)  {
         log.info("Starting recording app");
         RecordAndUploadScreen main = new RecordAndUploadScreen();
         new JCommander(main, args);
 
-        createMissingParentDirectories(main.localStorageFolder);
-        removeOldLocks(main.localStorageFolder);
-        startFileLogging(main.localStorageFolder);
+        try {
+            createMissingParentDirectories(main.localStorageFolder);
+            removeOldLocks(main.localStorageFolder);
+            startFileLogging(main.localStorageFolder);
 
-        main.run();
+            main.run();
+        } catch (Exception e) {
+            log.error("Exception encountered. Stopping now.", e);
+        }
     }
 
     private void run() throws Exception {
@@ -59,11 +63,12 @@ public class RecordAndUploadScreen {
     private void registerShutdownHook(final VideoRecordingThread videoRecordingThread) {
         final Thread mainThread = Thread.currentThread();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            log.warn("Shutdown signal received");
             videoRecordingThread.signalStop();
             try {
                 mainThread.join();
             } catch (InterruptedException e) {
-                log.warn("Could not join main thread", e);
+                log.error("Could not join main thread.  Stopping now.", e);
             }
         }, "ShutdownHook"));
     }

@@ -30,7 +30,7 @@ public class LockableFileLoggingAppender<E> extends FileAppender<E> {
         fileAppender.setFile(path.toAbsolutePath().toString());
         PatternLayoutEncoder encoder = new PatternLayoutEncoder();
         encoder.setContext(loggerContext);
-        encoder.setPattern("%d{HH:mm:ss.SSS} FIXME [%thread] %-5level %logger{36} - %msg%n");
+        encoder.setPattern("%d{HH:mm:ss.SSS} %-5level %-14([%thread]) - %msg%n");
         encoder.start();
 
         fileAppender.setEncoder(encoder);

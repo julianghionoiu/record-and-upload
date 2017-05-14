@@ -40,7 +40,7 @@ public class VideoRecordingThread extends Thread {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                System.out.println("Recorded " + recordingMetricsCollector.getTotalFrames() + " frames"
+                log.info("Recorded " + recordingMetricsCollector.getTotalFrames() + " frames"
                         + " at " + recordingMetricsCollector.getVideoFrameRate().getDenominator() + " fps"
                         + " with a load of " + recordingMetricsCollector.getRenderingTimeRatio());
             }
