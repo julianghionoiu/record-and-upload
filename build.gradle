@@ -46,7 +46,7 @@ ext {
 
 dependencies {
     compile 'ro.ghionoiu:dev-screen-record:0.0.4-SNAPSHOT'
-    compile 'ro.ghionoiu:s3-sync-stream:0.0.6-SNAPSHOT'
+    compile 'ro.ghionoiu:s3-sync-stream:0.0.7-SNAPSHOT'
     compile 'com.beust:jcommander:1.64'
     compile 'org.fusesource.jansi:jansi:1.8'
 

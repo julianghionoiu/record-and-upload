@@ -36,7 +36,7 @@ public class VideoRecordingThread extends Thread {
         timer = new Timer("RecordTask");
     }
 
-    private void scheduleMetricsTask() {
+    void scheduleVideoMetricsEvery(Duration delayBetweenRuns) {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -44,13 +44,11 @@ public class VideoRecordingThread extends Thread {
                         + " at " + recordingMetricsCollector.getVideoFrameRate().getDenominator() + " fps"
                         + " with a load of " + recordingMetricsCollector.getRenderingTimeRatio());
             }
-        }, 0, Duration.of(5, ChronoUnit.SECONDS).toMillis());
+        }, 0, delayBetweenRuns.toMillis());
     }
 
     @Override
     public void run() {
-        scheduleMetricsTask();
-
         try {
             videoRecorder.open(recordingFile.getAbsolutePath(), 4, 4);
             videoRecorder.start(MAX_RECORDING_DURATION);

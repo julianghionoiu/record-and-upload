@@ -53,6 +53,10 @@ public class RecordAndUploadScreen {
         BackgroundRemoteSyncTask remoteSyncTask = new BackgroundRemoteSyncTask(configFile, localStorageFolder);
         remoteSyncTask.scheduleSyncEvery(Duration.of(5, ChronoUnit.MINUTES));
 
+        // Start the metrics reporting
+        videoRecordingThread.scheduleVideoMetricsEvery(Duration.of(3, ChronoUnit.SECONDS));
+        remoteSyncTask.scheduleUploadMetricsEvery(Duration.of(2, ChronoUnit.SECONDS));
+
         // Stop gracefully
         registerShutdownHook(videoRecordingThread);
         videoRecordingThread.join();
