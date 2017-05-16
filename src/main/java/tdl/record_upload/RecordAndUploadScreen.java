@@ -5,7 +5,9 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
+import tdl.record.metrics.RecordingMetricsCollector;
 import tdl.record_upload.logging.LockableFileLoggingAppender;
+import tdl.s3.sync.progress.UploadStatsProgressListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,22 +48,27 @@ public class RecordAndUploadScreen {
     private void run() throws Exception {
         // Start the recording
         File recordingFile = Paths.get(localStorageFolder, "recording.mp4").toFile();
-        VideoRecordingThread videoRecordingThread = new VideoRecordingThread(recordingFile);
+        RecordingMetricsCollector recordingMetricsCollector = new RecordingMetricsCollector();
+        VideoRecordingThread videoRecordingThread = new VideoRecordingThread(recordingFile, recordingMetricsCollector);
         videoRecordingThread.start();
 
         // Start sync folder
-        BackgroundRemoteSyncTask remoteSyncTask = new BackgroundRemoteSyncTask(configFile, localStorageFolder);
+        UploadStatsProgressListener uploadStatsProgressListener = new UploadStatsProgressListener();
+        BackgroundRemoteSyncTask remoteSyncTask = new BackgroundRemoteSyncTask(
+                configFile, localStorageFolder, uploadStatsProgressListener);
         remoteSyncTask.scheduleSyncEvery(Duration.of(5, ChronoUnit.MINUTES));
 
         // Start the metrics reporting
-        videoRecordingThread.scheduleVideoMetricsEvery(Duration.of(3, ChronoUnit.SECONDS));
-        remoteSyncTask.scheduleUploadMetricsEvery(Duration.of(2, ChronoUnit.SECONDS));
+        MetricsReportingTask metricsReportingTask = new MetricsReportingTask(
+                recordingMetricsCollector, uploadStatsProgressListener);
+        metricsReportingTask.scheduleReportMetricsEvery(Duration.of(2, ChronoUnit.SECONDS));
 
         // Stop gracefully
         registerShutdownHook(videoRecordingThread);
         videoRecordingThread.join();
         stopFileLogging();
         remoteSyncTask.finalRun();
+        metricsReportingTask.cancel();
     }
 
     private void registerShutdownHook(final VideoRecordingThread videoRecordingThread) {

@@ -10,7 +10,6 @@ import tdl.s3.sync.destination.S3BucketDestination;
 import tdl.s3.sync.progress.UploadStatsProgressListener;
 
 import java.nio.file.Paths;
-import java.text.NumberFormat;
 import java.time.Duration;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -20,12 +19,11 @@ import java.util.concurrent.locks.ReentrantLock;
 @Slf4j
 class BackgroundRemoteSyncTask {
     private final Timer syncTimer;
-    private final Timer metricsTimer;
     private Lock syncLock;
     private final RemoteSync remoteSync;
-    private final UploadStatsProgressListener uploadStatsProgressListener;
 
-    BackgroundRemoteSyncTask(String configFilePath, String localStorageFolder) {
+    BackgroundRemoteSyncTask(String configFilePath, String localStorageFolder,
+                             UploadStatsProgressListener uploadStatsProgressListener) {
         Filters filters = Filters.getBuilder()
                 .include(Filters.endsWith(".mp4"))
                 .include(Filters.endsWith(".log"))
@@ -38,11 +36,9 @@ class BackgroundRemoteSyncTask {
                 .create();
 
         remoteSync = new RemoteSync(localFolder, s3Bucket);
-        uploadStatsProgressListener = new UploadStatsProgressListener();
         remoteSync.setListener(uploadStatsProgressListener);
 
         syncTimer = new Timer("UploadTask");
-        metricsTimer = new Timer("UploadMetrics");
         syncLock = new ReentrantLock();
     }
 
@@ -67,39 +63,15 @@ class BackgroundRemoteSyncTask {
         }, 0, delayBetweenRuns.toMillis());
     }
 
-
-    private static final NumberFormat percentageFormatter = NumberFormat.getPercentInstance();
-    private static final NumberFormat uploadSpeedFormatter = NumberFormat.getNumberInstance();
-    static {
-        percentageFormatter.setMinimumFractionDigits(1);
-        uploadSpeedFormatter.setMinimumFractionDigits(1);
-    }
-    void scheduleUploadMetricsEvery(Duration delayBetweenRuns) {
-        metricsTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                uploadStatsProgressListener.getCurrentStats().ifPresent(fileUploadStat -> log.info("Uploaded : "
-                        + percentageFormatter.format(fileUploadStat.getUploadRatio())
-                        + ". "
-                        + fileUploadStat.getUploadedSize() + "/" + fileUploadStat.getTotalSize()
-                        + " bytes. "
-                        + uploadSpeedFormatter.format(fileUploadStat.getMBps())
-                        + " Mbps"));
-            }
-        }, 0, delayBetweenRuns.toMillis());
-    }
-
-
     void finalRun() {
         log.info("Upload remaining parts and finalise video");
         syncLock.lock();
-        syncTimer.cancel();
         try {
             remoteSync.run();
         } catch (RemoteSyncException e) {
             log.error("File upload failed. Some files might not have been uploaded.");
         } finally {
-            metricsTimer.cancel();
+            syncLock.unlock();
         }
     }
 }
