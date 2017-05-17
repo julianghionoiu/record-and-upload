@@ -9,11 +9,11 @@ public class RecordAndUploadScreenTest {
      * Start the app
      *
      * Check output, you should see:
-     *  - recording metrics for frames, load should be below 1
+     *  - recording metrics for frames
      *  - once every 5 minutes you should see a SyncTask uploading files
      *
      * Check storage folder, you should see:
-     *  - a video file plus a corresponding .lock file
+     *  - a video file with timestamp plus a corresponding .lock file
      *  - a log file plus a corresponding .lock file
      *
      * Stop the recording (CTRL+C), you should see:
