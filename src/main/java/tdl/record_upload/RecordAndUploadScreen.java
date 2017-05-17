@@ -14,16 +14,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
 @Slf4j
 public class RecordAndUploadScreen {
-    @Parameter(names = {"-i", "--unique-id"}, description = "An ID to be used for this session", required = true)
-    private String id;
-
     @Parameter(names = {"-s", "--store"}, description = "The folder that will store the recordings")
-    private String localStorageFolder = "./build/play";
+    private String localStorageFolder = "./build/play/userX";
 
     @Parameter(names = {"-c", "--config"}, description = "The file containing the AWS parameters")
     private String configFile = ".private/aws-test-secrets";
@@ -45,9 +45,11 @@ public class RecordAndUploadScreen {
         }
     }
 
+    private static final DateTimeFormatter fileTimestampFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss");
     private void run() throws Exception {
         // Start the recording
-        File recordingFile = Paths.get(localStorageFolder, "recording.mp4").toFile();
+        String timestamp = LocalDateTime.now().format(fileTimestampFormatter);
+        File recordingFile = Paths.get(localStorageFolder, "recording_"+timestamp+".mp4").toFile();
         RecordingMetricsCollector recordingMetricsCollector = new RecordingMetricsCollector();
         VideoRecordingThread videoRecordingThread = new VideoRecordingThread(recordingFile, recordingMetricsCollector);
         videoRecordingThread.start();
