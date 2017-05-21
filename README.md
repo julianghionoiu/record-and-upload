@@ -6,7 +6,8 @@ Command-line tool that records the screen as Fragmented MP4 and upload the fragm
 
 ### Download
 
-Get the jar file from the latest Release
+
+Download the `record-and-upload-VERSION-capsule.jar` from `https://github.com/julianghionoiu/record-and-upload/releases/latest`
 
 ### Configure
 
@@ -23,7 +24,7 @@ s3_prefix=prefix/
 ### Run
 
 ```bash
-java -jar record-and-upload-0.0.4-capsule.jar --config .private/aws-test-secrets --store ./build/play
+java -jar record-and-upload-VERSION-capsule.jar --config .private/aws-test-secrets --store ./build/play
 ```
 
 
