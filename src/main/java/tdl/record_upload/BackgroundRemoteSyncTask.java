@@ -68,8 +68,8 @@ class BackgroundRemoteSyncTask {
         syncLock.lock();
         try {
             remoteSync.run();
-        } catch (RemoteSyncException e) {
-            log.error("File upload failed. Some files might not have been uploaded.");
+        } catch (Exception e) {
+            log.error("File upload failed. Some files might not have been uploaded. Reason: {}", e);
         } finally {
             syncLock.unlock();
         }

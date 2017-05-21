@@ -55,8 +55,12 @@ class MetricsReportingTask {
             @Override
             public void run() {
                 runCounter++;
-                checkForRecordingDrift();
-                displayMetrics();
+                try {
+                    checkForRecordingDrift();
+                    displayMetrics();
+                } catch (Exception e) {
+                    log.error("Unexpected problem while gathering metrics: {}", e.getMessage());
+                }
             }
         }, 0, delayBetweenRuns.toMillis());
     }
