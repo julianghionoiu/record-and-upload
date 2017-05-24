@@ -36,7 +36,7 @@ This will grate a maven based Jar that will download the required dependencies b
 ```bash
 ./gradlew clean mavenCapsule
 rm -R ~/.capsule/deps/ro
-java -jar ./build/libs/record-and-upload-0.0.4-SNAPSHOT-capsule.jar --config .private/aws-test-secrets --store ./build/play
+java -jar ./build/libs/record-and-upload-0.0.6-SNAPSHOT-capsule.jar --config .private/aws-test-secrets --store ./build/play
 ```
 
 To generate test files you could run

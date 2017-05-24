@@ -1,9 +1,9 @@
 package tdl.record_upload;
 
 import lombok.extern.slf4j.Slf4j;
+import tdl.s3.credentials.AWSSecretProperties;
 import tdl.s3.sync.Filters;
 import tdl.s3.sync.RemoteSync;
-import tdl.s3.sync.RemoteSyncException;
 import tdl.s3.sync.Source;
 import tdl.s3.sync.destination.Destination;
 import tdl.s3.sync.destination.S3BucketDestination;
@@ -31,9 +31,14 @@ class BackgroundRemoteSyncTask {
         Source localFolder = Source.getBuilder(Paths.get(localStorageFolder))
                 .setFilters(filters)
                 .create();
-        Destination s3Bucket = S3BucketDestination.getBuilder()
-                .loadFromPath(Paths.get(configFilePath))
-                .create();
+
+        AWSSecretProperties awsSecretProperties = AWSSecretProperties
+                .fromPlainTextFile(Paths.get(configFilePath));
+        Destination s3Bucket =  S3BucketDestination.builder()
+                .awsClient(awsSecretProperties.createClient())
+                .bucket(awsSecretProperties.getS3Bucket())
+                .prefix(awsSecretProperties.getS3Prefix())
+                .build();
 
         remoteSync = new RemoteSync(localFolder, s3Bucket);
         remoteSync.setListener(uploadStatsProgressListener);
