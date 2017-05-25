@@ -6,19 +6,22 @@ import com.beust.jcommander.Parameter;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import tdl.record.metrics.RecordingMetricsCollector;
+import tdl.record_upload.credentials.FederatedAuth;
 import tdl.record_upload.logging.LockableFileLoggingAppender;
 import tdl.s3.sync.progress.UploadStatsProgressListener;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Properties;
 
 @Slf4j
 public class RecordAndUploadScreen {
@@ -33,8 +36,11 @@ public class RecordAndUploadScreen {
         log.info("Starting recording app");
         RecordAndUploadScreen main = new RecordAndUploadScreen();
         new JCommander(main, args);
-
         try {
+            FederatedAuth federatedAuth = new FederatedAuth(main.configFile);
+            String tempCredentialsFileName = ".private/aws-temp-secrets";
+            federatedAuth.saveTempCredentials(tempCredentialsFileName);
+            main.configFile = tempCredentialsFileName;
             createMissingParentDirectories(main.localStorageFolder);
             removeOldLocks(main.localStorageFolder);
             startFileLogging(main.localStorageFolder);
