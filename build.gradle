@@ -42,6 +42,7 @@ ext {
 }
 
 dependencies {
+    compile 'com.amazonaws:aws-java-sdk-sts:1.11.135'
     compile 'ro.ghionoiu:dev-screen-record:0.0.4'
     compile 'ro.ghionoiu:s3-sync-stream:0.0.8'
     compile 'com.beust:jcommander:1.64'
