@@ -1,12 +1,10 @@
 package tdl.record_upload;
 
 import lombok.extern.slf4j.Slf4j;
-import tdl.s3.credentials.AWSSecretProperties;
 import tdl.s3.sync.Filters;
 import tdl.s3.sync.RemoteSync;
 import tdl.s3.sync.Source;
 import tdl.s3.sync.destination.Destination;
-import tdl.s3.sync.destination.S3BucketDestination;
 import tdl.s3.sync.progress.UploadStatsProgressListener;
 
 import java.nio.file.Paths;
@@ -22,7 +20,8 @@ class BackgroundRemoteSyncTask {
     private Lock syncLock;
     private final RemoteSync remoteSync;
 
-    BackgroundRemoteSyncTask(String configFilePath, String localStorageFolder,
+    BackgroundRemoteSyncTask(String localStorageFolder,
+                             Destination remoteDestination,
                              UploadStatsProgressListener uploadStatsProgressListener) {
         Filters filters = Filters.getBuilder()
                 .include(Filters.endsWith(".mp4"))
@@ -32,15 +31,7 @@ class BackgroundRemoteSyncTask {
                 .setFilters(filters)
                 .create();
 
-        AWSSecretProperties awsSecretProperties = AWSSecretProperties
-                .fromPlainTextFile(Paths.get(configFilePath));
-        Destination s3Bucket =  S3BucketDestination.builder()
-                .awsClient(awsSecretProperties.createClient())
-                .bucket(awsSecretProperties.getS3Bucket())
-                .prefix(awsSecretProperties.getS3Prefix())
-                .build();
-
-        remoteSync = new RemoteSync(localFolder, s3Bucket);
+        remoteSync = new RemoteSync(localFolder, remoteDestination);
         remoteSync.setListener(uploadStatsProgressListener);
 
         syncTimer = new Timer("UploadTask");

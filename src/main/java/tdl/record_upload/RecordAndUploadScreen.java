@@ -7,6 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import tdl.record.metrics.RecordingMetricsCollector;
 import tdl.record_upload.logging.LockableFileLoggingAppender;
+import tdl.s3.credentials.AWSSecretProperties;
+import tdl.s3.sync.destination.Destination;
+import tdl.s3.sync.destination.DestinationOperationException;
+import tdl.s3.sync.destination.S3BucketDestination;
 import tdl.s3.sync.progress.UploadStatsProgressListener;
 
 import java.io.File;
@@ -14,7 +18,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -22,31 +25,51 @@ import java.time.temporal.ChronoUnit;
 
 @Slf4j
 public class RecordAndUploadScreen {
-    @Parameter(names = {"-s", "--store"}, description = "The folder that will store the recordings")
-    private String localStorageFolder = "./build/play/userX";
 
-    @Parameter(names = {"-c", "--config"}, description = "The file containing the AWS parameters")
-    private String configFile = ".private/aws-test-secrets";
+    private static class Params {
+        @Parameter(names = {"-s", "--store"}, description = "The folder that will store the recordings")
+        private String localStorageFolder = "./build/play/userX";
+
+        @Parameter(names = {"-c", "--config"}, description = "The file containing the AWS parameters")
+        private String configFile = ".private/aws-test-secrets";
+    }
 
 
     public static void main(String[] args)  {
         log.info("Starting recording app");
-        RecordAndUploadScreen main = new RecordAndUploadScreen();
-        new JCommander(main, args);
+        Params params = new Params();
+        new JCommander(params, args);
 
         try {
-            createMissingParentDirectories(main.localStorageFolder);
-            removeOldLocks(main.localStorageFolder);
-            startFileLogging(main.localStorageFolder);
+            // Prepare source folder
+            createMissingParentDirectories(params.localStorageFolder);
+            removeOldLocks(params.localStorageFolder);
+            startFileLogging(params.localStorageFolder);
 
-            main.run();
+            // Prepare remote destination
+            AWSSecretProperties awsSecretProperties = AWSSecretProperties
+                    .fromPlainTextFile(Paths.get(params.configFile));
+            Destination s3BucketDestination =  S3BucketDestination.builder()
+                    .awsClient(awsSecretProperties.createClient())
+                    .bucket(awsSecretProperties.getS3Bucket())
+                    .prefix(awsSecretProperties.getS3Prefix())
+                    .build();
+
+            // Validate destination
+            log.info("Checking permissions");
+            s3BucketDestination.testUploadPermissions();
+
+            // Start processing
+            run(params.localStorageFolder, s3BucketDestination);
+        } catch (DestinationOperationException e) {
+            log.error("User does not have enough permissions to upload. Reason: {}", e.getMessage());
         } catch (Exception e) {
             log.error("Exception encountered. Stopping now.", e);
         }
     }
 
     private static final DateTimeFormatter fileTimestampFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss");
-    private void run() throws Exception {
+    private static void run(String localStorageFolder, Destination remoteDestination) throws Exception {
         // Start the recording
         String timestamp = LocalDateTime.now().format(fileTimestampFormatter);
         File recordingFile = Paths.get(localStorageFolder, "recording_"+timestamp+".mp4").toFile();
@@ -57,7 +80,7 @@ public class RecordAndUploadScreen {
         // Start sync folder
         UploadStatsProgressListener uploadStatsProgressListener = new UploadStatsProgressListener();
         BackgroundRemoteSyncTask remoteSyncTask = new BackgroundRemoteSyncTask(
-                configFile, localStorageFolder, uploadStatsProgressListener);
+                localStorageFolder, remoteDestination, uploadStatsProgressListener);
         remoteSyncTask.scheduleSyncEvery(Duration.of(5, ChronoUnit.MINUTES));
 
         // Start the metrics reporting
@@ -73,7 +96,7 @@ public class RecordAndUploadScreen {
         metricsReportingTask.cancel();
     }
 
-    private void registerShutdownHook(final VideoRecordingThread videoRecordingThread) {
+    private static void registerShutdownHook(final VideoRecordingThread videoRecordingThread) {
         final Thread mainThread = Thread.currentThread();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             log.warn("Shutdown signal received");

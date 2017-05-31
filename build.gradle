@@ -24,6 +24,7 @@ sourceCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
     jcenter()
+    mavenLocal()
 }
 
 /**
@@ -43,7 +44,7 @@ ext {
 
 dependencies {
     compile 'ro.ghionoiu:dev-screen-record:0.0.4'
-    compile 'ro.ghionoiu:s3-sync-stream:0.0.9'
+    compile 'ro.ghionoiu:s3-sync-stream:0.0.10'
     compile 'com.beust:jcommander:1.64'
     compile 'org.fusesource.jansi:jansi:1.8'
 
@@ -77,6 +78,7 @@ task mavenCapsule(type: MavenCapsule){
         minJavaVersion = '1.8.0'
         dependencyConfiguration configurations.compile
         repositories << 'jcenter'
+//        repositories << 'local'
 
         //noinspection GroovyAssignabilityCheck
         platform('windows'){
