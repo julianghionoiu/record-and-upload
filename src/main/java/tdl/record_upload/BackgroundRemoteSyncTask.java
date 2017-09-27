@@ -26,6 +26,7 @@ class BackgroundRemoteSyncTask {
         Filters filters = Filters.getBuilder()
                 .include(Filters.endsWith(".mp4"))
                 .include(Filters.endsWith(".log"))
+                .include(Filters.endsWith(".srcs"))
                 .create();
         Source localFolder = Source.getBuilder(Paths.get(localStorageFolder))
                 .setFilters(filters)

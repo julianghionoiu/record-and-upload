@@ -107,7 +107,7 @@ class MetricsReportingTask {
         }
 
         if (sourceCodeRecordingMetricsCollector.isCurrentlyRecording()) {
-            stringFormatter.format("Captured %2d code snapshots at %3dms/snap",
+            stringFormatter.format("%2d snapshots, %3dms/snap",
                     sourceCodeRecordingMetricsCollector.getTotalSnapshots(),
                     TimeUnit.NANOSECONDS.toMillis(sourceCodeRecordingMetricsCollector.getLastSnapshotProcessingTimeNano()));
         }
