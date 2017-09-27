@@ -35,7 +35,7 @@ class BackgroundRemoteSyncTask {
         remoteSync = new RemoteSync(localFolder, remoteDestination);
         remoteSync.setListener(uploadStatsProgressListener);
 
-        syncTimer = new Timer("UploadTask");
+        syncTimer = new Timer("Upload");
         syncLock = new ReentrantLock();
     }
 

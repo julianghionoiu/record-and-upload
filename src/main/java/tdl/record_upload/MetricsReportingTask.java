@@ -11,7 +11,6 @@ import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Formatter;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
@@ -40,7 +39,6 @@ class MetricsReportingTask {
     private final SourceCodeRecordingMetricsCollector sourceCodeRecordingMetricsCollector;
     private final UploadStatsProgressListener uploadStatsProgressListener;
     private final StringBuilder displayBuffer;
-    private final Formatter stringFormatter;
     private int runCounter;
 
     MetricsReportingTask(VideoRecordingMetricsCollector videoRecordingMetricsCollector,
@@ -50,9 +48,8 @@ class MetricsReportingTask {
         this.videoRecordingMetricsCollector = videoRecordingMetricsCollector;
         this.sourceCodeRecordingMetricsCollector = sourceCodeRecordingMetricsCollector;
         this.uploadStatsProgressListener = uploadStatsProgressListener;
-        this.metricsTimer = new Timer("MetricsTask");
+        this.metricsTimer = new Timer("Metrics");
         this.displayBuffer = new StringBuilder();
-        this.stringFormatter = new Formatter(displayBuffer);
     }
 
     void scheduleReportMetricsEvery(Duration delayBetweenRuns) {
@@ -96,10 +93,13 @@ class MetricsReportingTask {
                 log.debug("Could not obtain filesize information");
             }
 
-            stringFormatter.format("Recorded %8s, %3d frames, %4s MB",
-                    durationFormatter.format(recodedTime),
-                    videoRecordingMetricsCollector.getTotalFrames(),
-                    sizeFormatter.format(bytes_to_mb(fileSize)));
+            displayBuffer.append(
+                    String.format("Recorded %8s, %3d frame%s, %4s MB",
+                            durationFormatter.format(recodedTime),
+                            videoRecordingMetricsCollector.getTotalFrames(),
+                            maybePlural(videoRecordingMetricsCollector.getTotalFrames()),
+                            sizeFormatter.format(bytes_to_mb(fileSize)))
+            );
         }
 
         if (videoRecordingMetricsCollector.isCurrentlyRecording() && sourceCodeRecordingMetricsCollector.isCurrentlyRecording()) {
@@ -107,9 +107,12 @@ class MetricsReportingTask {
         }
 
         if (sourceCodeRecordingMetricsCollector.isCurrentlyRecording()) {
-            stringFormatter.format("%2d snapshots, %3dms/snap",
+            displayBuffer.append(
+                    String.format("%2d snapshot%s, %3d ms/snap",
                     sourceCodeRecordingMetricsCollector.getTotalSnapshots(),
-                    TimeUnit.NANOSECONDS.toMillis(sourceCodeRecordingMetricsCollector.getLastSnapshotProcessingTimeNano()));
+                    maybePlural(sourceCodeRecordingMetricsCollector.getTotalSnapshots()),
+                    TimeUnit.NANOSECONDS.toMillis(sourceCodeRecordingMetricsCollector.getLastSnapshotProcessingTimeNano()))
+            );
         }
 
         if (videoRecordingMetricsCollector.isCurrentlyRecording() && uploadStatsProgressListener.isCurrentlyUploading()) {
@@ -118,10 +121,13 @@ class MetricsReportingTask {
 
         if (uploadStatsProgressListener.isCurrentlyUploading()) {
             uploadStatsProgressListener.getCurrentStats().ifPresent(fileUploadStat ->
-                    stringFormatter.format("Uploaded %3s of %3s MB at %5s MB/sec",
+                    displayBuffer.append(
+                            String.format("Uploaded %3s of %3s MB at %5s MB/sec",
                             percentageFormatter.format(fileUploadStat.getUploadRatio()),
                             sizeFormatter.format(bytes_to_mb(fileUploadStat.getTotalSize())),
-                            uploadSpeedFormatter.format(fileUploadStat.getMBps())));
+                            uploadSpeedFormatter.format(fileUploadStat.getMBps()))
+                    )
+            );
         }
 
         if(displayBuffer.length() > 0){
@@ -130,6 +136,10 @@ class MetricsReportingTask {
     }
 
     //~~~~ Helpers
+
+    private static String maybePlural(long value) {
+        return value > 1 ? "s" : "";
+    }
 
     private boolean onceEveryCoupleOfRuns() {
         return runCounter % 20 == 0;

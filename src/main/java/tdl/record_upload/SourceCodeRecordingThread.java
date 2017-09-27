@@ -19,7 +19,7 @@ public class SourceCodeRecordingThread extends Thread implements Stoppable {
     private final SourceCodeRecorder sourceCodeRecorder;
 
     SourceCodeRecordingThread(Path sourceCodeFolder, Path sourceCodeRecordingFile, SourceCodeRecordingMetricsCollector recordingMetricsCollector) {
-        super("SourceCodeRecThread");
+        super("SourceRec");
 
         CopyFromDirectorySourceCodeProvider sourceCodeProvider = new CopyFromDirectorySourceCodeProvider(
                 sourceCodeFolder);

@@ -132,7 +132,7 @@ public class RecordAndUploadApp {
             } catch (InterruptedException e) {
                 log.error("Could not join main thread.  Stopping now.", e);
             }
-        }, "ShutdownHook"));
+        }, "Shutdown"));
     }
 
     // ~~~~~ Helpers

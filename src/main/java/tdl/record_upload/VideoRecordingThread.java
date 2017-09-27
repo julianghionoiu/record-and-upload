@@ -20,7 +20,7 @@ public class VideoRecordingThread extends Thread implements Stoppable {
     private File recordingFile;
 
     VideoRecordingThread(File videoRecordingFile, VideoRecordingMetricsCollector recordingMetricsCollector) {
-        super("VideoRecThread");
+        super("VideoRec");
         this.recordingFile = videoRecordingFile;
 
         videoRecorder = new VideoRecorder
