@@ -1,18 +1,16 @@
 package tdl.record_upload;
 
 import lombok.extern.slf4j.Slf4j;
-import tdl.record.image.input.InputFromScreen;
-import tdl.record.image.input.ScaleToOptimalSizeImage;
-import tdl.record.metrics.RecordingMetricsCollector;
-import tdl.record.utils.ImageQualityHint;
-import tdl.record.video.VideoRecorder;
-import tdl.record.video.VideoRecorderException;
+import tdl.record.screen.image.input.InputFromScreen;
+import tdl.record.screen.image.input.ScaleToOptimalSizeImage;
+import tdl.record.screen.metrics.VideoRecordingMetricsCollector;
+import tdl.record.screen.utils.ImageQualityHint;
+import tdl.record.screen.video.VideoRecorder;
+import tdl.record.screen.video.VideoRecorderException;
 
 import java.io.File;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.Timer;
-import java.util.TimerTask;
 
 @Slf4j
 public class VideoRecordingThread extends Thread {
@@ -21,9 +19,9 @@ public class VideoRecordingThread extends Thread {
     private final VideoRecorder videoRecorder;
     private File recordingFile;
 
-    VideoRecordingThread(File recordingFile, RecordingMetricsCollector recordingMetricsCollector) {
-        super("RecordThread");
-        this.recordingFile = recordingFile;
+    VideoRecordingThread(File videoRecordingFile, VideoRecordingMetricsCollector recordingMetricsCollector) {
+        super("VideoRecThread");
+        this.recordingFile = videoRecordingFile;
 
         videoRecorder = new VideoRecorder
                 .Builder(new ScaleToOptimalSizeImage(ImageQualityHint.MEDIUM, new InputFromScreen()))

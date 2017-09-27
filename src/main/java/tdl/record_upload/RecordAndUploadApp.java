@@ -5,7 +5,8 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
-import tdl.record.metrics.RecordingMetricsCollector;
+import tdl.record.screen.metrics.VideoRecordingMetricsCollector;
+import tdl.record.sourcecode.metrics.SourceCodeRecordingMetricsCollector;
 import tdl.record_upload.logging.LockableFileLoggingAppender;
 import tdl.s3.credentials.AWSSecretProperties;
 import tdl.s3.sync.destination.Destination;
@@ -24,21 +25,26 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
 @Slf4j
-public class RecordAndUploadScreen {
+public class RecordAndUploadApp {
 
     private static class Params {
-        @Parameter(names = {"-s", "--store"}, description = "The folder that will store the recordings")
+        @Parameter(names = {"--store"}, description = "The folder that will store the recordings")
         private String localStorageFolder = "./build/play/userX";
 
-        @Parameter(names = {"-c", "--config"}, description = "The file containing the AWS parameters")
+        @Parameter(names = {"--config"}, description = "The file containing the AWS parameters")
         private String configFile = ".private/aws-test-secrets";
+
+        @Parameter(names = {"--sourcecode"}, description = "The folder that contains the source code that needs to be tracked")
+        private String localSourceCodeFolder = ".";
+
     }
 
 
     public static void main(String[] args)  {
         log.info("Starting recording app");
         Params params = new Params();
-        new JCommander(params, args);
+        JCommander jCommander = new JCommander(params);
+        jCommander.parse(args);
 
         try {
             // Prepare source folder
@@ -60,7 +66,7 @@ public class RecordAndUploadScreen {
             s3BucketDestination.testUploadPermissions();
 
             // Start processing
-            run(params.localStorageFolder, s3BucketDestination);
+            run(params.localStorageFolder, params.localSourceCodeFolder, s3BucketDestination);
         } catch (DestinationOperationException e) {
             log.error("User does not have enough permissions to upload. Reason: {}", e.getMessage());
         } catch (Exception e) {
@@ -69,13 +75,22 @@ public class RecordAndUploadScreen {
     }
 
     private static final DateTimeFormatter fileTimestampFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss");
-    private static void run(String localStorageFolder, Destination remoteDestination) throws Exception {
-        // Start the recording
+    private static void run(String localStorageFolder, String localSourceCodeFolder,  Destination remoteDestination) throws Exception {
         String timestamp = LocalDateTime.now().format(fileTimestampFormatter);
-        File recordingFile = Paths.get(localStorageFolder, "recording_"+timestamp+".mp4").toFile();
-        RecordingMetricsCollector recordingMetricsCollector = new RecordingMetricsCollector();
-        VideoRecordingThread videoRecordingThread = new VideoRecordingThread(recordingFile, recordingMetricsCollector);
+
+        // Start the video recording
+        File screenRecordingFile = Paths.get(localStorageFolder, "screencast_"+timestamp+".mp4").toFile();
+        VideoRecordingMetricsCollector videoRecordingMetricsCollector = new VideoRecordingMetricsCollector();
+        VideoRecordingThread videoRecordingThread = new VideoRecordingThread(screenRecordingFile, videoRecordingMetricsCollector);
         videoRecordingThread.start();
+
+        // Start the source code recording
+        Path sourceCodeFolder = Paths.get(localSourceCodeFolder);
+        Path sourceCodeRecordingFile = Paths.get(localStorageFolder, "sourcecode_"+timestamp+".srcs");
+        SourceCodeRecordingMetricsCollector sourceCodeRecordingMetricsCollector = new SourceCodeRecordingMetricsCollector();
+        SourceCodeRecordingThread sourceCodeRecordingThread = new SourceCodeRecordingThread(sourceCodeFolder, sourceCodeRecordingFile,
+                sourceCodeRecordingMetricsCollector);
+        sourceCodeRecordingThread.start();
 
         // Start sync folder
         UploadStatsProgressListener uploadStatsProgressListener = new UploadStatsProgressListener();
@@ -85,21 +100,24 @@ public class RecordAndUploadScreen {
 
         // Start the metrics reporting
         MetricsReportingTask metricsReportingTask = new MetricsReportingTask(
-                recordingMetricsCollector, uploadStatsProgressListener);
+                videoRecordingMetricsCollector, sourceCodeRecordingMetricsCollector, uploadStatsProgressListener);
         metricsReportingTask.scheduleReportMetricsEvery(Duration.of(2, ChronoUnit.SECONDS));
 
         // Stop gracefully
-        registerShutdownHook(videoRecordingThread);
+        registerShutdownHook(videoRecordingThread, sourceCodeRecordingThread);
+        sourceCodeRecordingThread.join();
         videoRecordingThread.join();
         stopFileLogging();
         remoteSyncTask.finalRun();
         metricsReportingTask.cancel();
     }
 
-    private static void registerShutdownHook(final VideoRecordingThread videoRecordingThread) {
+    private static void registerShutdownHook(final VideoRecordingThread videoRecordingThread,
+                                             SourceCodeRecordingThread sourceCodeRecordingThread) {
         final Thread mainThread = Thread.currentThread();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             log.warn("Shutdown signal received");
+            sourceCodeRecordingThread.signalStop();
             videoRecordingThread.signalStop();
             try {
                 mainThread.join();

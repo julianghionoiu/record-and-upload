@@ -4,3 +4,4 @@ classes
 .gradle
 build
 .private
+out
