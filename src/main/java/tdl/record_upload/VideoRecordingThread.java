@@ -13,7 +13,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
 @Slf4j
-public class VideoRecordingThread extends Thread {
+public class VideoRecordingThread extends Thread implements Stoppable {
     private static final Duration MAX_RECORDING_DURATION = Duration.of(12, ChronoUnit.HOURS);
 
     private final VideoRecorder videoRecorder;
@@ -40,7 +40,8 @@ public class VideoRecordingThread extends Thread {
         }
     }
 
-    void signalStop() {
+    @Override
+    public void signalStop() {
         videoRecorder.stop();
     }
 }

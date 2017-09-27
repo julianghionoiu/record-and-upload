@@ -23,6 +23,8 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.List;
 
 @Slf4j
 public class RecordAndUploadApp {
@@ -103,22 +105,28 @@ public class RecordAndUploadApp {
                 videoRecordingMetricsCollector, sourceCodeRecordingMetricsCollector, uploadStatsProgressListener);
         metricsReportingTask.scheduleReportMetricsEvery(Duration.of(2, ChronoUnit.SECONDS));
 
-        // Stop gracefully
-        registerShutdownHook(videoRecordingThread, sourceCodeRecordingThread);
-        sourceCodeRecordingThread.join();
-        videoRecordingThread.join();
+        // Start the event server
+        ExternalEventServerThread externalEventServerThread = new ExternalEventServerThread();
+        externalEventServerThread.start();
+
+        // Wait for the stop signal and trigger a graceful shutdown
+        List<Stoppable> serviceThreadsToStop = Arrays.asList(videoRecordingThread, sourceCodeRecordingThread, externalEventServerThread);
+        registerShutdownHook(serviceThreadsToStop);
+        for (Stoppable stoppable : serviceThreadsToStop) {
+            stoppable.join();
+        }
+
+        // Finalise the upload and cancel tasks
         stopFileLogging();
         remoteSyncTask.finalRun();
         metricsReportingTask.cancel();
     }
 
-    private static void registerShutdownHook(final VideoRecordingThread videoRecordingThread,
-                                             SourceCodeRecordingThread sourceCodeRecordingThread) {
+    private static void registerShutdownHook(List<Stoppable> servicesToStop) {
         final Thread mainThread = Thread.currentThread();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             log.warn("Shutdown signal received");
-            sourceCodeRecordingThread.signalStop();
-            videoRecordingThread.signalStop();
+            servicesToStop.forEach(Stoppable::signalStop);
             try {
                 mainThread.join();
             } catch (InterruptedException e) {

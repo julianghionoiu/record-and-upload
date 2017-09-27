@@ -13,7 +13,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public class SourceCodeRecordingThread extends Thread {
+public class SourceCodeRecordingThread extends Thread implements Stoppable {
     private static final Duration MAX_RECORDING_DURATION = Duration.of(12, ChronoUnit.HOURS);
 
     private final SourceCodeRecorder sourceCodeRecorder;
@@ -41,7 +41,8 @@ public class SourceCodeRecordingThread extends Thread {
         }
     }
 
-    void signalStop() {
+    @Override
+    public void signalStop() {
         sourceCodeRecorder.stop();
     }
 }
