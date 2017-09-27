@@ -40,6 +40,7 @@ repositories {
  */
 ext {
     humbleVideoVersion = '0.2.1'
+    jettyVersion = '9.4.7.v20170914'
 }
 
 dependencies {
@@ -55,6 +56,8 @@ dependencies {
         exclude group: 'com.beust', module: 'jcommander'
     }
     compile 'com.beust:jcommander:1.72'
+    compile 'org.eclipse.jetty:jetty-server:'+jettyVersion
+    compile 'org.eclipse.jetty:jetty-servlet:'+jettyVersion
     compile 'org.fusesource.jansi:jansi:1.8'
 
     compile 'org.slf4j:slf4j-api:1.7.25'

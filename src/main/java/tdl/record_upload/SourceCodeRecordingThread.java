@@ -41,6 +41,10 @@ public class SourceCodeRecordingThread extends Thread implements Stoppable {
         }
     }
 
+    void tagCurrentState(String tag) throws SourceCodeRecorderException {
+        sourceCodeRecorder.tagCurrentState(tag);
+    }
+
     @Override
     public void signalStop() {
         sourceCodeRecorder.stop();

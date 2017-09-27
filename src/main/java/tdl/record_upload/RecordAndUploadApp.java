@@ -106,7 +106,8 @@ public class RecordAndUploadApp {
         metricsReportingTask.scheduleReportMetricsEvery(Duration.of(2, ChronoUnit.SECONDS));
 
         // Start the event server
-        ExternalEventServerThread externalEventServerThread = new ExternalEventServerThread();
+        ExternalEventServerThread externalEventServerThread = new ExternalEventServerThread(
+                sourceCodeRecordingThread);
         externalEventServerThread.start();
 
         // Wait for the stop signal and trigger a graceful shutdown
@@ -126,7 +127,14 @@ public class RecordAndUploadApp {
         final Thread mainThread = Thread.currentThread();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             log.warn("Shutdown signal received");
-            servicesToStop.forEach(Stoppable::signalStop);
+            try {
+                for (Stoppable stoppable : servicesToStop) {
+                    stoppable.signalStop();
+                }
+            } catch (Exception e) {
+                log.error("Error sending the stop signals.", e);
+            }
+
             try {
                 mainThread.join();
             } catch (InterruptedException e) {

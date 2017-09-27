@@ -4,5 +4,5 @@ public interface Stoppable {
 
     void join() throws InterruptedException;
 
-    void signalStop();
+    void signalStop() throws Exception;
 }
