@@ -21,9 +21,8 @@ public class ExternalEventServerThread implements Stoppable {
     ExternalEventServerThread(SourceCodeRecordingThread sourceCodeRecordingThread) {
         // Create the server
         QueuedThreadPool threadPool = new QueuedThreadPool(4, 1);
-        threadPool.setName("Server");
+        threadPool.setName("ExEvent");
         server = new Server(threadPool);
-        server.setStopAtShutdown(true);
 
         // Add the http connector
         ServerConnector http = new ServerConnector(server);
@@ -36,8 +35,8 @@ public class ExternalEventServerThread implements Stoppable {
         server.setHandler(handler);
         handler.addServletWithMapping(new ServletHolder(new StatusServlet()),
                 "/status");
-        handler.addServletWithMapping(new ServletHolder(new NotifyDeployServlet(sourceCodeRecordingThread)),
-                "/notifyDeploy");
+        handler.addServletWithMapping(new ServletHolder(new NotifyServlet(sourceCodeRecordingThread)),
+                "/notify");
 
     }
 
@@ -63,13 +62,14 @@ public class ExternalEventServerThread implements Stoppable {
         protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
             resp.setContentType("text/plain");
             resp.setStatus(HttpServletResponse.SC_OK);
+            resp.getWriter().println("OK");
         }
     }
 
-    private class NotifyDeployServlet extends HttpServlet {
+    private class NotifyServlet extends HttpServlet {
         private SourceCodeRecordingThread sourceCodeRecordingThread;
 
-        NotifyDeployServlet(SourceCodeRecordingThread sourceCodeRecordingThread) {
+        NotifyServlet(SourceCodeRecordingThread sourceCodeRecordingThread) {
             this.sourceCodeRecordingThread = sourceCodeRecordingThread;
         }
 
