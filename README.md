@@ -23,8 +23,16 @@ s3_prefix=prefix/
 
 ### Run
 
+#### pre-Java 9 versions
+
 ```bash
 java -jar record-and-upload-VERSION-capsule.jar --config .private/aws-test-secrets --store ./build/play
+```
+
+#### Java 9 versions
+
+```bash
+java --illegal-access=warn --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED -jar record-and-upload-VERSION-capsule.jar --config .private/aws-test-secrets --store ./build/play
 ```
 
 
@@ -33,10 +41,23 @@ java -jar record-and-upload-VERSION-capsule.jar --config .private/aws-test-secre
 ### Build and run as command-line app
 
 This will grate a maven based Jar that will download the required dependencies before running the app:
+
+#### Running and building with pre-Java 9 versions
+
 ```bash
 ./gradlew clean mavenCapsule
 rm -R ~/.capsule/deps/ro
 java -jar ./build/libs/record-and-upload-`cat version.txt`-capsule.jar --config .private/aws-test-secrets --store ./build/play
+```
+
+#### Running and building with Java 9
+
+Ensure `JAVA_HOME` points to the Java 9 SDK home folder. Use `java -version` to check if the java launcher on the `PATH` is version 9.0 (aka 1.9) or higher.
+
+```bash
+./gradlew clean mavenCapsule
+rm -R ~/.capsule/deps/ro
+java --illegal-access=warn --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED -jar ./build/libs/record-and-upload-`cat version.txt`-capsule.jar --config .private/aws-test-secrets --store ./build/play
 ```
 
 To generate test files you could run
