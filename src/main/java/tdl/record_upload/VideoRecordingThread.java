@@ -35,7 +35,7 @@ public class VideoRecordingThread extends Thread implements Stoppable {
             videoRecorder.open(recordingFile.getAbsolutePath(), 4, 4);
             videoRecorder.start(MAX_RECORDING_DURATION);
             videoRecorder.close();
-        } catch (VideoRecorderException e) {
+        } catch (Exception e) {
             log.error("Video recorder encountered exception. Recording has been stopped.", e);
         }
     }
