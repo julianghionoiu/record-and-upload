@@ -32,7 +32,7 @@ java -jar record-and-upload-VERSION-capsule.jar --config .private/aws-test-secre
 #### Java 9 versions
 
 ```bash
-java --illegal-access=warn --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED -jar record-and-upload-VERSION-capsule.jar --config .private/aws-test-secrets --store ./build/play
+java --illegal-access=warn  --add-modules=java.xml.bind,java.activation -jar record-and-upload-VERSION-capsule.jar --config .private/aws-test-secrets --store ./build/play
 ```
 
 
@@ -57,7 +57,7 @@ Ensure `JAVA_HOME` points to the Java 9 SDK home folder. Use `java -version` to 
 ```bash
 ./gradlew clean mavenCapsule
 rm -R ~/.capsule/deps/ro
-java --illegal-access=warn --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED -jar ./build/libs/record-and-upload-`cat version.txt`-capsule.jar --config .private/aws-test-secrets --store ./build/play
+java --illegal-access=warn  --add-modules=java.xml.bind,java.activation -jar ./build/libs/record-and-upload-`cat version.txt`-capsule.jar --config .private/aws-test-secrets --store ./build/play
 ```
 
 To generate test files you could run
