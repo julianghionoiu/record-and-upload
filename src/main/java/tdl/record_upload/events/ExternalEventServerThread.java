@@ -1,4 +1,4 @@
-package tdl.record_upload;
+package tdl.record_upload.events;
 
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -6,6 +6,8 @@ import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import tdl.record.sourcecode.record.SourceCodeRecorderException;
+import tdl.record_upload.Stoppable;
+import tdl.record_upload.sourcecode.SourceCodeRecordingThread;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -18,7 +20,7 @@ public class ExternalEventServerThread implements Stoppable {
     private static final int PORT = 41375;
     private Server server;
 
-    ExternalEventServerThread(SourceCodeRecordingThread sourceCodeRecordingThread) {
+    public ExternalEventServerThread(SourceCodeRecordingThread sourceCodeRecordingThread) {
         // Create the server
         QueuedThreadPool threadPool = new QueuedThreadPool(4, 1);
         threadPool.setName("ExEvent");
@@ -40,7 +42,7 @@ public class ExternalEventServerThread implements Stoppable {
 
     }
 
-    void start() throws Exception {
+    public void start() throws Exception {
         server.start();
     }
 
@@ -59,7 +61,7 @@ public class ExternalEventServerThread implements Stoppable {
     private class StatusServlet extends HttpServlet {
 
         @Override
-        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
             resp.setContentType("text/plain");
             resp.setStatus(HttpServletResponse.SC_OK);
             resp.getWriter().println("OK");
@@ -75,7 +77,7 @@ public class ExternalEventServerThread implements Stoppable {
 
         @Override
         protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-                throws ServletException, IOException {
+                throws IOException {
             String body = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
 
             try {

@@ -1,4 +1,4 @@
-package tdl.record_upload;
+package tdl.record_upload.sourcecode;
 
 import lombok.extern.slf4j.Slf4j;
 import tdl.record.sourcecode.content.CopyFromDirectorySourceCodeProvider;
@@ -6,6 +6,7 @@ import tdl.record.sourcecode.metrics.SourceCodeRecordingMetricsCollector;
 import tdl.record.sourcecode.record.SourceCodeRecorder;
 import tdl.record.sourcecode.record.SourceCodeRecorderException;
 import tdl.record.sourcecode.time.SystemMonotonicTimeSource;
+import tdl.record_upload.Stoppable;
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -18,7 +19,7 @@ public class SourceCodeRecordingThread extends Thread implements Stoppable {
 
     private final SourceCodeRecorder sourceCodeRecorder;
 
-    SourceCodeRecordingThread(Path sourceCodeFolder, Path sourceCodeRecordingFile, SourceCodeRecordingMetricsCollector recordingMetricsCollector) {
+    public SourceCodeRecordingThread(Path sourceCodeFolder, Path sourceCodeRecordingFile, SourceCodeRecordingMetricsCollector recordingMetricsCollector) {
         super("SourceRec");
 
         CopyFromDirectorySourceCodeProvider sourceCodeProvider = new CopyFromDirectorySourceCodeProvider(
@@ -41,7 +42,7 @@ public class SourceCodeRecordingThread extends Thread implements Stoppable {
         }
     }
 
-    void tagCurrentState(String tag) throws SourceCodeRecorderException {
+    public void tagCurrentState(String tag) throws SourceCodeRecorderException {
         sourceCodeRecorder.tagCurrentState(tag);
     }
 

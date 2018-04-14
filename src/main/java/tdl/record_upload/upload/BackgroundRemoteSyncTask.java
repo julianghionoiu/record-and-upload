@@ -1,4 +1,4 @@
-package tdl.record_upload;
+package tdl.record_upload.upload;
 
 import lombok.extern.slf4j.Slf4j;
 import tdl.s3.sync.Filters;
@@ -15,12 +15,12 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
-class BackgroundRemoteSyncTask {
+public class BackgroundRemoteSyncTask {
     private final Timer syncTimer;
     private Lock syncLock;
     private final RemoteSync remoteSync;
 
-    BackgroundRemoteSyncTask(String localStorageFolder,
+    public BackgroundRemoteSyncTask(String localStorageFolder,
                              Destination remoteDestination,
                              UploadStatsProgressListener uploadStatsProgressListener) {
         Filters filters = Filters.getBuilder()
@@ -39,7 +39,7 @@ class BackgroundRemoteSyncTask {
         syncLock = new ReentrantLock();
     }
 
-    void scheduleSyncEvery(Duration delayBetweenRuns) {
+    public void scheduleSyncEvery(Duration delayBetweenRuns) {
         syncTimer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -60,13 +60,13 @@ class BackgroundRemoteSyncTask {
         }, 0, delayBetweenRuns.toMillis());
     }
 
-    void finalRun() {
+    public void finalRun() {
         log.info("Upload remaining parts and finalise video");
         syncLock.lock();
         try {
             remoteSync.run();
         } catch (Exception e) {
-            log.error("File upload failed. Some files might not have been uploaded. Reason: {}", e);
+            log.error("File upload failed. Some files might not have been uploaded. Reason: ", e);
         } finally {
             syncLock.unlock();
         }

@@ -1,64 +1,30 @@
 package tdl.record_upload;
 
 import lombok.extern.slf4j.Slf4j;
-import tdl.record.screen.metrics.VideoRecordingMetricsCollector;
-import tdl.record.sourcecode.metrics.SourceCodeRecordingMetricsCollector;
-import tdl.s3.sync.progress.UploadStatsProgressListener;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.text.NumberFormat;
 import java.time.Duration;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 class MetricsReportingTask {
-    private static final NumberFormat percentageFormatter = NumberFormat.getPercentInstance();
-    private static final NumberFormat sizeFormatter = NumberFormat.getNumberInstance();
-    private static final NumberFormat uploadSpeedFormatter = NumberFormat.getNumberInstance();
-    private static final DateTimeFormatter durationFormatter = DateTimeFormatter.ofPattern("H'h'mm'm'ss's'");
-
-    static {
-        setFormatter(percentageFormatter, 1);
-        setFormatter(sizeFormatter, 2);
-        setFormatter(uploadSpeedFormatter, 3);
-    }
-    private static final double RENDERER_LOAD_THRESHOLD = 0.90;
-    private static void setFormatter(NumberFormat formatter, int digits) {
-        formatter.setMinimumFractionDigits(digits);
-        formatter.setMaximumFractionDigits(digits);
-    }
-
-
     private final Timer metricsTimer;
-    private final VideoRecordingMetricsCollector videoRecordingMetricsCollector;
-    private final SourceCodeRecordingMetricsCollector sourceCodeRecordingMetricsCollector;
-    private final UploadStatsProgressListener uploadStatsProgressListener;
     private final StringBuilder displayBuffer;
-    private int runCounter;
+    private final List<MonitoredSubject> monitoredSubjects;
 
-    MetricsReportingTask(VideoRecordingMetricsCollector videoRecordingMetricsCollector,
-                         SourceCodeRecordingMetricsCollector sourceCodeRecordingMetricsCollector,
-                         UploadStatsProgressListener uploadStatsProgressListener) {
-        this.runCounter = 0;
-        this.videoRecordingMetricsCollector = videoRecordingMetricsCollector;
-        this.sourceCodeRecordingMetricsCollector = sourceCodeRecordingMetricsCollector;
-        this.uploadStatsProgressListener = uploadStatsProgressListener;
+    MetricsReportingTask(List<MonitoredSubject> monitoredSubjects) {
         this.metricsTimer = new Timer("Metrics");
         this.displayBuffer = new StringBuilder();
+        this.monitoredSubjects = monitoredSubjects;
     }
 
     void scheduleReportMetricsEvery(Duration delayBetweenRuns) {
         metricsTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                runCounter++;
                 try {
-                    checkForRecordingDrift();
+                    displayErrors();
                     displayMetrics();
                 } catch (Exception e) {
                     log.error("Unexpected problem while gathering metrics: {}", e.getMessage());
@@ -67,88 +33,27 @@ class MetricsReportingTask {
         }, 0, delayBetweenRuns.toMillis());
     }
 
-    private void checkForRecordingDrift() {
-        if (onceEveryCoupleOfRuns() &&
-                videoRecordingMetricsCollector.isCurrentlyRecording() &&
-                videoRecordingMetricsCollector.getRenderingTimeRatio() > RENDERER_LOAD_THRESHOLD) {
-            log.warn(String.format("Renderer load is above %s, the recording will experience time drift",
-                    percentageFormatter.format(RENDERER_LOAD_THRESHOLD)));
+    private void displayErrors() {
+        for (MonitoredSubject monitoredSubject : monitoredSubjects) {
+            monitoredSubject.displayErrors(log);
         }
     }
 
     private void displayMetrics() {
         displayBuffer.setLength(0);
+        for (MonitoredSubject monitoredSubject : monitoredSubjects) {
+            if (monitoredSubject.isActive()) {
+                if (displayBuffer.length() > 0) {
+                    displayBuffer.append(" | ");
+                }
 
-        if (videoRecordingMetricsCollector.isCurrentlyRecording()) {
-            // Compute duration
-            int fps = videoRecordingMetricsCollector.getInputFrameRate().getDenominator();
-            long recordedSeconds = videoRecordingMetricsCollector.getTotalFrames() / fps;
-            LocalTime recodedTime = LocalTime.MIDNIGHT.plus(Duration.ofSeconds(recordedSeconds));
-
-            // Compute filesize
-            long fileSize = 0;
-            try {
-                fileSize = Files.size(videoRecordingMetricsCollector.getDestinationPath());
-            } catch (IOException e) {
-                log.debug("Could not obtain filesize information");
+                monitoredSubject.displayMetrics(displayBuffer);
             }
-
-            displayBuffer.append(
-                    String.format("Recorded %8s, %3d frame%s, %4s MB",
-                            durationFormatter.format(recodedTime),
-                            videoRecordingMetricsCollector.getTotalFrames(),
-                            maybePlural(videoRecordingMetricsCollector.getTotalFrames()),
-                            sizeFormatter.format(bytes_to_mb(fileSize)))
-            );
         }
-
-        if (videoRecordingMetricsCollector.isCurrentlyRecording() && sourceCodeRecordingMetricsCollector.isCurrentlyRecording()) {
-            displayBuffer.append(" | ");
-        }
-
-        if (sourceCodeRecordingMetricsCollector.isCurrentlyRecording()) {
-            displayBuffer.append(
-                    String.format("%2d snapshot%s, %3d ms/snap",
-                    sourceCodeRecordingMetricsCollector.getTotalSnapshots(),
-                    maybePlural(sourceCodeRecordingMetricsCollector.getTotalSnapshots()),
-                    TimeUnit.NANOSECONDS.toMillis(sourceCodeRecordingMetricsCollector.getLastSnapshotProcessingTimeNano()))
-            );
-        }
-
-        if (videoRecordingMetricsCollector.isCurrentlyRecording() && uploadStatsProgressListener.isCurrentlyUploading()) {
-            displayBuffer.append(" | ");
-        }
-
-        if (uploadStatsProgressListener.isCurrentlyUploading()) {
-            uploadStatsProgressListener.getCurrentStats().ifPresent(fileUploadStat ->
-                    displayBuffer.append(
-                            String.format("Uploaded %3s of %3s MB at %5s MB/sec",
-                            percentageFormatter.format(fileUploadStat.getUploadRatio()),
-                            sizeFormatter.format(bytes_to_mb(fileUploadStat.getTotalSize())),
-                            uploadSpeedFormatter.format(fileUploadStat.getMBps()))
-                    )
-            );
-        }
-
         if(displayBuffer.length() > 0){
             log.info(displayBuffer.toString());
         }
     }
-
-    //~~~~ Helpers
-
-    private static String maybePlural(long value) {
-        return value > 1 ? "s" : "";
-    }
-
-    private boolean onceEveryCoupleOfRuns() {
-        return runCounter % 20 == 0;
-    }
-
-    private static double bytes_to_mb(double totalSize) {
-        return totalSize/((double)1024*1024);
-    }
-
 
     void cancel() {
         metricsTimer.cancel();

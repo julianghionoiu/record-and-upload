@@ -7,7 +7,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import tdl.record.screen.metrics.VideoRecordingMetricsCollector;
 import tdl.record.sourcecode.metrics.SourceCodeRecordingMetricsCollector;
+import tdl.record_upload.events.ExternalEventServerThread;
 import tdl.record_upload.logging.LockableFileLoggingAppender;
+import tdl.record_upload.sourcecode.SourceCodeRecordingStatus;
+import tdl.record_upload.sourcecode.SourceCodeRecordingThread;
+import tdl.record_upload.upload.BackgroundRemoteSyncTask;
+import tdl.record_upload.upload.UploadStatsProgressStatus;
+import tdl.record_upload.video.VideoRecordingStatus;
+import tdl.record_upload.video.VideoRecordingThread;
 import tdl.s3.credentials.AWSSecretProperties;
 import tdl.s3.sync.destination.Destination;
 import tdl.s3.sync.destination.DestinationOperationException;
@@ -23,7 +30,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -39,6 +46,8 @@ public class RecordAndUploadApp {
         @Parameter(names = {"--sourcecode"}, description = "The folder that contains the source code that needs to be tracked")
         private String localSourceCodeFolder = ".";
 
+        @Parameter(names = "--no-video", description = "Disable video recording, use only source code")
+        private boolean doNotRecordVideo = false;
     }
 
 
@@ -79,12 +88,16 @@ public class RecordAndUploadApp {
     private static final DateTimeFormatter fileTimestampFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss");
     private static void run(String localStorageFolder, String localSourceCodeFolder,  Destination remoteDestination) throws Exception {
         String timestamp = LocalDateTime.now().format(fileTimestampFormatter);
+        List<Stoppable> serviceThreadsToStop = new ArrayList<>();
+        List<MonitoredSubject> monitoredSubjects = new ArrayList<>();
 
         // Start the video recording
         File screenRecordingFile = Paths.get(localStorageFolder, "screencast_"+timestamp+".mp4").toFile();
         VideoRecordingMetricsCollector videoRecordingMetricsCollector = new VideoRecordingMetricsCollector();
         VideoRecordingThread videoRecordingThread = new VideoRecordingThread(screenRecordingFile, videoRecordingMetricsCollector);
         videoRecordingThread.start();
+        serviceThreadsToStop.add(videoRecordingThread);
+        monitoredSubjects.add(new VideoRecordingStatus(videoRecordingMetricsCollector));
 
         // Start the source code recording
         Path sourceCodeFolder = Paths.get(localSourceCodeFolder);
@@ -93,25 +106,28 @@ public class RecordAndUploadApp {
         SourceCodeRecordingThread sourceCodeRecordingThread = new SourceCodeRecordingThread(sourceCodeFolder, sourceCodeRecordingFile,
                 sourceCodeRecordingMetricsCollector);
         sourceCodeRecordingThread.start();
+        serviceThreadsToStop.add(sourceCodeRecordingThread);
+        monitoredSubjects.add(new SourceCodeRecordingStatus(sourceCodeRecordingMetricsCollector));
 
         // Start sync folder
         UploadStatsProgressListener uploadStatsProgressListener = new UploadStatsProgressListener();
         BackgroundRemoteSyncTask remoteSyncTask = new BackgroundRemoteSyncTask(
                 localStorageFolder, remoteDestination, uploadStatsProgressListener);
         remoteSyncTask.scheduleSyncEvery(Duration.of(5, ChronoUnit.MINUTES));
+        monitoredSubjects.add(new UploadStatsProgressStatus(uploadStatsProgressListener));
 
         // Start the metrics reporting
         MetricsReportingTask metricsReportingTask = new MetricsReportingTask(
-                videoRecordingMetricsCollector, sourceCodeRecordingMetricsCollector, uploadStatsProgressListener);
+                monitoredSubjects);
         metricsReportingTask.scheduleReportMetricsEvery(Duration.of(2, ChronoUnit.SECONDS));
 
         // Start the event server
         ExternalEventServerThread externalEventServerThread = new ExternalEventServerThread(
                 sourceCodeRecordingThread);
         externalEventServerThread.start();
+        serviceThreadsToStop.add(externalEventServerThread);
 
         // Wait for the stop signal and trigger a graceful shutdown
-        List<Stoppable> serviceThreadsToStop = Arrays.asList(videoRecordingThread, sourceCodeRecordingThread, externalEventServerThread);
         registerShutdownHook(serviceThreadsToStop);
         for (Stoppable stoppable : serviceThreadsToStop) {
             stoppable.join();

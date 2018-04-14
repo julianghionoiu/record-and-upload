@@ -1,4 +1,4 @@
-package tdl.record_upload;
+package tdl.record_upload.video;
 
 import lombok.extern.slf4j.Slf4j;
 import tdl.record.screen.image.input.InputFromScreen;
@@ -6,7 +6,7 @@ import tdl.record.screen.image.input.ScaleToOptimalSizeImage;
 import tdl.record.screen.metrics.VideoRecordingMetricsCollector;
 import tdl.record.screen.utils.ImageQualityHint;
 import tdl.record.screen.video.VideoRecorder;
-import tdl.record.screen.video.VideoRecorderException;
+import tdl.record_upload.Stoppable;
 
 import java.io.File;
 import java.time.Duration;
@@ -19,7 +19,7 @@ public class VideoRecordingThread extends Thread implements Stoppable {
     private final VideoRecorder videoRecorder;
     private File recordingFile;
 
-    VideoRecordingThread(File videoRecordingFile, VideoRecordingMetricsCollector recordingMetricsCollector) {
+    public VideoRecordingThread(File videoRecordingFile, VideoRecordingMetricsCollector recordingMetricsCollector) {
         super("VideoRec");
         this.recordingFile = videoRecordingFile;
 
