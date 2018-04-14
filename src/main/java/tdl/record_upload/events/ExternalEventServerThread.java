@@ -5,22 +5,22 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import tdl.record.sourcecode.record.SourceCodeRecorderException;
 import tdl.record_upload.Stoppable;
-import tdl.record_upload.sourcecode.SourceCodeRecordingThread;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class ExternalEventServerThread implements Stoppable {
     private static final int PORT = 41375;
     private Server server;
+    private List<ExternalEventListener> notifyListeners;
 
-    public ExternalEventServerThread(SourceCodeRecordingThread sourceCodeRecordingThread) {
+    public ExternalEventServerThread() {
         // Create the server
         QueuedThreadPool threadPool = new QueuedThreadPool(4, 1);
         threadPool.setName("ExEvent");
@@ -32,14 +32,16 @@ public class ExternalEventServerThread implements Stoppable {
         http.setPort(PORT);
         server.addConnector(http);
 
+        // Prepare listeners
+        notifyListeners = new ArrayList<>();
+
         // Register the servlets
         ServletHandler handler = new ServletHandler();
         server.setHandler(handler);
         handler.addServletWithMapping(new ServletHolder(new StatusServlet()),
                 "/status");
-        handler.addServletWithMapping(new ServletHolder(new NotifyServlet(sourceCodeRecordingThread)),
+        handler.addServletWithMapping(new ServletHolder(new NotifyServlet(notifyListeners)),
                 "/notify");
-
     }
 
     public void start() throws Exception {
@@ -56,6 +58,12 @@ public class ExternalEventServerThread implements Stoppable {
         server.stop();
     }
 
+    //~~~~~~~~~ The listeners
+
+    public void addNotifyListener(ExternalEventListener externalEventListener) {
+        notifyListeners.add(externalEventListener);
+    }
+
     //~~~~~~~~~ The commands that are being handled
 
     private class StatusServlet extends HttpServlet {
@@ -69,10 +77,10 @@ public class ExternalEventServerThread implements Stoppable {
     }
 
     private class NotifyServlet extends HttpServlet {
-        private SourceCodeRecordingThread sourceCodeRecordingThread;
+        private List<ExternalEventListener> notifyListeners;
 
-        NotifyServlet(SourceCodeRecordingThread sourceCodeRecordingThread) {
-            this.sourceCodeRecordingThread = sourceCodeRecordingThread;
+        NotifyServlet(List<ExternalEventListener> notifyListeners) {
+            this.notifyListeners = notifyListeners;
         }
 
         @Override
@@ -81,11 +89,13 @@ public class ExternalEventServerThread implements Stoppable {
             String body = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
 
             try {
-                sourceCodeRecordingThread.tagCurrentState(body.trim());
+                for (ExternalEventListener externalEventListener : notifyListeners) {
+                    externalEventListener.process(body.trim());
+                }
                 resp.setContentType("text/plain");
                 resp.setStatus(HttpServletResponse.SC_OK);
                 resp.getWriter().println("ACK");
-            } catch (SourceCodeRecorderException e) {
+            } catch (Exception e) {
                 resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 resp.getWriter().println(e.getMessage());
             }

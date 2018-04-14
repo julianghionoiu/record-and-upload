@@ -90,24 +90,13 @@ public class RecordAndUploadApp {
         String timestamp = LocalDateTime.now().format(fileTimestampFormatter);
         List<Stoppable> serviceThreadsToStop = new ArrayList<>();
         List<MonitoredSubject> monitoredSubjects = new ArrayList<>();
+        ExternalEventServerThread externalEventServerThread = new ExternalEventServerThread();
 
-        // Start the video recording
-        File screenRecordingFile = Paths.get(localStorageFolder, "screencast_"+timestamp+".mp4").toFile();
-        VideoRecordingMetricsCollector videoRecordingMetricsCollector = new VideoRecordingMetricsCollector();
-        VideoRecordingThread videoRecordingThread = new VideoRecordingThread(screenRecordingFile, videoRecordingMetricsCollector);
-        videoRecordingThread.start();
-        serviceThreadsToStop.add(videoRecordingThread);
-        monitoredSubjects.add(new VideoRecordingStatus(videoRecordingMetricsCollector));
-
-        // Start the source code recording
-        Path sourceCodeFolder = Paths.get(localSourceCodeFolder);
-        Path sourceCodeRecordingFile = Paths.get(localStorageFolder, "sourcecode_"+timestamp+".srcs");
-        SourceCodeRecordingMetricsCollector sourceCodeRecordingMetricsCollector = new SourceCodeRecordingMetricsCollector();
-        SourceCodeRecordingThread sourceCodeRecordingThread = new SourceCodeRecordingThread(sourceCodeFolder, sourceCodeRecordingFile,
-                sourceCodeRecordingMetricsCollector);
-        sourceCodeRecordingThread.start();
-        serviceThreadsToStop.add(sourceCodeRecordingThread);
-        monitoredSubjects.add(new SourceCodeRecordingStatus(sourceCodeRecordingMetricsCollector));
+        // Start the recordings
+        startVideoRecording(localStorageFolder, timestamp,
+                serviceThreadsToStop, monitoredSubjects, externalEventServerThread);
+        startSourceCodeRecording(localStorageFolder, localSourceCodeFolder, timestamp,
+                serviceThreadsToStop, monitoredSubjects, externalEventServerThread);
 
         // Start sync folder
         UploadStatsProgressListener uploadStatsProgressListener = new UploadStatsProgressListener();
@@ -122,8 +111,6 @@ public class RecordAndUploadApp {
         metricsReportingTask.scheduleReportMetricsEvery(Duration.of(2, ChronoUnit.SECONDS));
 
         // Start the event server
-        ExternalEventServerThread externalEventServerThread = new ExternalEventServerThread(
-                sourceCodeRecordingThread);
         externalEventServerThread.start();
         serviceThreadsToStop.add(externalEventServerThread);
 
@@ -137,6 +124,33 @@ public class RecordAndUploadApp {
         stopFileLogging();
         remoteSyncTask.finalRun();
         metricsReportingTask.cancel();
+    }
+
+    private static void startVideoRecording(String localStorageFolder, String timestamp,
+                                            List<Stoppable> serviceThreadsToStop,
+                                            List<MonitoredSubject> monitoredSubjects,
+                                            ExternalEventServerThread externalEventServerThread) {
+        File screenRecordingFile = Paths.get(localStorageFolder, "screencast_" + timestamp + ".mp4").toFile();
+        VideoRecordingMetricsCollector videoRecordingMetricsCollector = new VideoRecordingMetricsCollector();
+        VideoRecordingThread videoRecordingThread = new VideoRecordingThread(screenRecordingFile, videoRecordingMetricsCollector);
+        videoRecordingThread.start();
+        serviceThreadsToStop.add(videoRecordingThread);
+        monitoredSubjects.add(new VideoRecordingStatus(videoRecordingMetricsCollector));
+    }
+
+    private static void startSourceCodeRecording(String localStorageFolder, String localSourceCodeFolder, String timestamp,
+                                                 List<Stoppable> serviceThreadsToStop,
+                                                 List<MonitoredSubject> monitoredSubjects,
+                                                 ExternalEventServerThread externalEventServerThread) {
+        Path sourceCodeFolder = Paths.get(localSourceCodeFolder);
+        Path sourceCodeRecordingFile = Paths.get(localStorageFolder, "sourcecode_" + timestamp + ".srcs");
+        SourceCodeRecordingMetricsCollector sourceCodeRecordingMetricsCollector = new SourceCodeRecordingMetricsCollector();
+        SourceCodeRecordingThread sourceCodeRecordingThread = new SourceCodeRecordingThread(sourceCodeFolder, sourceCodeRecordingFile,
+                sourceCodeRecordingMetricsCollector);
+        sourceCodeRecordingThread.start();
+        serviceThreadsToStop.add(sourceCodeRecordingThread);
+        monitoredSubjects.add(new SourceCodeRecordingStatus(sourceCodeRecordingMetricsCollector));
+        externalEventServerThread.addNotifyListener(sourceCodeRecordingThread::tagCurrentState);
     }
 
     private static void registerShutdownHook(List<Stoppable> servicesToStop) {
