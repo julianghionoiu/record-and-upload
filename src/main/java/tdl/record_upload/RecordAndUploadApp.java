@@ -4,6 +4,7 @@ import ch.qos.logback.classic.LoggerContext;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tdl.record.screen.metrics.VideoRecordingMetricsCollector;
 import tdl.record.sourcecode.metrics.SourceCodeRecordingMetricsCollector;
@@ -13,6 +14,7 @@ import tdl.record_upload.sourcecode.SourceCodeRecordingStatus;
 import tdl.record_upload.sourcecode.SourceCodeRecordingThread;
 import tdl.record_upload.upload.BackgroundRemoteSyncTask;
 import tdl.record_upload.upload.UploadStatsProgressStatus;
+import tdl.record_upload.video.NoVideoDummyThread;
 import tdl.record_upload.video.VideoRecordingStatus;
 import tdl.record_upload.video.VideoRecordingThread;
 import tdl.s3.credentials.AWSSecretProperties;
@@ -77,7 +79,7 @@ public class RecordAndUploadApp {
             s3BucketDestination.testUploadPermissions();
 
             // Start processing
-            run(params.localStorageFolder, params.localSourceCodeFolder, s3BucketDestination);
+            run(params.localStorageFolder, params.localSourceCodeFolder, s3BucketDestination, params.doNotRecordVideo);
         } catch (DestinationOperationException e) {
             log.error("User does not have enough permissions to upload. Reason: {}", e.getMessage());
         } catch (Exception e) {
@@ -86,15 +88,25 @@ public class RecordAndUploadApp {
     }
 
     private static final DateTimeFormatter fileTimestampFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss");
-    private static void run(String localStorageFolder, String localSourceCodeFolder,  Destination remoteDestination) throws Exception {
+    private static void run(String localStorageFolder,
+                            String localSourceCodeFolder,
+                            Destination remoteDestination,
+                            boolean doNotRecordVideo) throws Exception {
         String timestamp = LocalDateTime.now().format(fileTimestampFormatter);
         List<Stoppable> serviceThreadsToStop = new ArrayList<>();
         List<MonitoredSubject> monitoredSubjects = new ArrayList<>();
         ExternalEventServerThread externalEventServerThread = new ExternalEventServerThread();
 
-        // Start the recordings
-        startVideoRecording(localStorageFolder, timestamp,
-                serviceThreadsToStop, monitoredSubjects, externalEventServerThread);
+        // Start video recording
+        boolean recordVideo = !doNotRecordVideo;
+        if (recordVideo) {
+            startVideoRecording(localStorageFolder, timestamp,
+                    serviceThreadsToStop, monitoredSubjects, externalEventServerThread);
+        } else {
+            showNoVideoWarning(serviceThreadsToStop, monitoredSubjects, externalEventServerThread);
+        }
+
+        // Start sourcecode recording
         startSourceCodeRecording(localStorageFolder, localSourceCodeFolder, timestamp,
                 serviceThreadsToStop, monitoredSubjects, externalEventServerThread);
 
@@ -136,6 +148,14 @@ public class RecordAndUploadApp {
         videoRecordingThread.start();
         serviceThreadsToStop.add(videoRecordingThread);
         monitoredSubjects.add(new VideoRecordingStatus(videoRecordingMetricsCollector));
+    }
+
+    private static void showNoVideoWarning(List<Stoppable> serviceThreadsToStop,
+                                           List<MonitoredSubject> monitoredSubjects,
+                                           ExternalEventServerThread externalEventServerThread) {
+        NoVideoDummyThread noVideo = new NoVideoDummyThread();
+        serviceThreadsToStop.add(noVideo);
+        monitoredSubjects.add(noVideo);
     }
 
     private static void startSourceCodeRecording(String localStorageFolder, String localSourceCodeFolder, String timestamp,
