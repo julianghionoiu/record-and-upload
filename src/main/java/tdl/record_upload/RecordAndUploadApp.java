@@ -124,7 +124,6 @@ public class RecordAndUploadApp {
 
         // Start the event server
         externalEventServerThread.start();
-        serviceThreadsToStop.add(externalEventServerThread);
 
         // Wait for the stop signal and trigger a graceful shutdown
         registerShutdownHook(serviceThreadsToStop);
@@ -132,10 +131,20 @@ public class RecordAndUploadApp {
             stoppable.join();
         }
 
+        // If all are joined, signal the event thread to stop
+        externalEventServerThread.signalStop();
+
         // Finalise the upload and cancel tasks
         stopFileLogging();
         remoteSyncTask.finalRun();
         metricsReportingTask.cancel();
+
+        // Join the event thread
+        externalEventServerThread.join();
+        log.info("~~~~~~ Stopped ~~~~~~");
+
+        // Forcefully stop. A problem with Jetty finalisation might prevent the JVM from stopping
+        Runtime.getRuntime().halt(0);
     }
 
     private static void startVideoRecording(String localStorageFolder, String timestamp,
@@ -148,6 +157,7 @@ public class RecordAndUploadApp {
         videoRecordingThread.start();
         serviceThreadsToStop.add(videoRecordingThread);
         monitoredSubjects.add(new VideoRecordingStatus(videoRecordingMetricsCollector));
+        externalEventServerThread.addStopListener(eventPayload -> videoRecordingThread.signalStop());
     }
 
     private static void showNoVideoWarning(List<Stoppable> serviceThreadsToStop,
@@ -156,6 +166,8 @@ public class RecordAndUploadApp {
         NoVideoDummyThread noVideo = new NoVideoDummyThread();
         serviceThreadsToStop.add(noVideo);
         monitoredSubjects.add(noVideo);
+        externalEventServerThread.addStopListener(eventPayload -> noVideo.signalStop());
+
     }
 
     private static void startSourceCodeRecording(String localStorageFolder, String localSourceCodeFolder, String timestamp,
@@ -171,6 +183,7 @@ public class RecordAndUploadApp {
         serviceThreadsToStop.add(sourceCodeRecordingThread);
         monitoredSubjects.add(new SourceCodeRecordingStatus(sourceCodeRecordingMetricsCollector));
         externalEventServerThread.addNotifyListener(sourceCodeRecordingThread::tagCurrentState);
+        externalEventServerThread.addStopListener(eventPayload -> sourceCodeRecordingThread.signalStop());
     }
 
     private static void registerShutdownHook(List<Stoppable> servicesToStop) {

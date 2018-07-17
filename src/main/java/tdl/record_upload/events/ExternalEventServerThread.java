@@ -19,12 +19,14 @@ public class ExternalEventServerThread implements Stoppable {
     private static final int PORT = 41375;
     private Server server;
     private List<ExternalEventListener> notifyListeners;
+    private List<ExternalEventListener> stopListeners;
 
     public ExternalEventServerThread() {
         // Create the server
         QueuedThreadPool threadPool = new QueuedThreadPool(4, 1);
         threadPool.setName("ExEvent");
         server = new Server(threadPool);
+        server.setStopTimeout(1000);
 
         // Add the http connector
         ServerConnector http = new ServerConnector(server);
@@ -34,14 +36,17 @@ public class ExternalEventServerThread implements Stoppable {
 
         // Prepare listeners
         notifyListeners = new ArrayList<>();
+        stopListeners = new ArrayList<>();
 
         // Register the servlets
         ServletHandler handler = new ServletHandler();
         server.setHandler(handler);
         handler.addServletWithMapping(new ServletHolder(new StatusServlet()),
                 "/status");
-        handler.addServletWithMapping(new ServletHolder(new NotifyServlet(notifyListeners)),
+        handler.addServletWithMapping(new ServletHolder(new PostEventServlet(notifyListeners)),
                 "/notify");
+        handler.addServletWithMapping(new ServletHolder(new PostEventServlet(stopListeners)),
+                "/stop");
     }
 
     public void start() throws Exception {
@@ -64,6 +69,10 @@ public class ExternalEventServerThread implements Stoppable {
         notifyListeners.add(externalEventListener);
     }
 
+    public void addStopListener(ExternalEventListener externalEventListener) {
+        stopListeners.add(externalEventListener);
+    }
+
     //~~~~~~~~~ The commands that are being handled
 
     private class StatusServlet extends HttpServlet {
@@ -76,11 +85,11 @@ public class ExternalEventServerThread implements Stoppable {
         }
     }
 
-    private class NotifyServlet extends HttpServlet {
-        private List<ExternalEventListener> notifyListeners;
+    private class PostEventServlet extends HttpServlet {
+        private List<ExternalEventListener> listeners;
 
-        NotifyServlet(List<ExternalEventListener> notifyListeners) {
-            this.notifyListeners = notifyListeners;
+        PostEventServlet(List<ExternalEventListener> listeners) {
+            this.listeners = listeners;
         }
 
         @Override
@@ -89,7 +98,7 @@ public class ExternalEventServerThread implements Stoppable {
             String body = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
 
             try {
-                for (ExternalEventListener externalEventListener : notifyListeners) {
+                for (ExternalEventListener externalEventListener : listeners) {
                     externalEventListener.process(body.trim());
                 }
                 resp.setContentType("text/plain");
