@@ -9,11 +9,13 @@ buildscript {
     dependencies {
         classpath 'us.kirchmeier:gradle-capsule-plugin:1.0.2'
         classpath 'ch.netzwerg:gradle-release-plugin:1.2.4'
+        classpath 'org.kordamp.gradle:jdeps-gradle-plugin:0.4.1'
     }
 }
 
 apply plugin: 'java'
 apply plugin: 'application'
+apply plugin: 'org.kordamp.jdeps'
 
 group 'ro.ghionoiu'
 
@@ -85,6 +87,30 @@ jar {
     manifest {
         attributes "Main-Class": "$mainClassName"
     }
+}
+
+// ~~~~~ Listing dependencies using jdeps
+// ~~~~~ See https://github.com/aalmiray/jdeps-gradle-plugin
+// CLI examples of getting similar reports:
+//   $ ./gradlew clean mavenCapsule                    <=== required to generate the uber jar
+//
+//   $ jdeps build/libs/record-and-upload-0.0.16-SNAPSHOT-capsule.jar
+//   $ jdeps -recursive -verbose build/libs/record-and-upload-0.0.16-SNAPSHOT-capsule.jar
+//   $ jdeps -cp 'build/classes/*' -verbose -profile -recursive build/libs/record-and-upload-0.0.16-SNAPSHOT-capsule.jar
+//   $ jdeps -recursive -profile -verbose build/libs/record-and-upload-0.0.16-SNAPSHOT-capsule.jar
+//   $ jdeps -I --api-only  --dot-output record-and-upload-deps  build/libs/record-and-upload-0.0.16-SNAPSHOT-capsule.jar
+//
+// Although 'jdeps' task, generates a more comprehensive report by going through the packages and modules of the project and also its direct dependencies
+
+jdeps {
+    sourceSets = ['main', 'test']
+    configurations = ['testRuntime']
+    recursive = true
+    failOnError = false
+    consoleOutput = true
+    profile = true
+    verbose = true
+    jdkinternals = false
 }
 
 task mavenCapsule(type: MavenCapsule){
