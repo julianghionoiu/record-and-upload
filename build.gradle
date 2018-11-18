@@ -69,6 +69,16 @@ dependencies {
     // Uncomment if you run from IDE
 //    compile 'io.humble:humble-video-arch-x86_64-apple-darwin12:'+humbleVideoVersion
 
+    // The needed modules to duff the Java 9 and higher modularisation runtime error messages:
+    // Java 9 and 10:
+    //       java.lang.NoClassDefFoundError: javax/xml/bind/JAXBException
+    //       java.lang.NoClassDefFoundError: javax/activation/JAXBException
+    //
+    // Java 11 and higher:
+    //      Error occurred during initialization of boot layer
+    //      java.lang.module.FindException: Module java.xml.bind not found
+    compile 'javax.xml.bind:jaxb-api:2.2.11'
+    compile 'javax.activation:activation:1.1.1'
 
     testCompile('junit:junit:4.11'){
         exclude group: 'org.hamcrest', module: 'hamcrest-core'
