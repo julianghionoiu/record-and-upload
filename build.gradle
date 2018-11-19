@@ -9,11 +9,13 @@ buildscript {
     dependencies {
         classpath 'us.kirchmeier:gradle-capsule-plugin:1.0.2'
         classpath 'ch.netzwerg:gradle-release-plugin:1.2.4'
+        classpath 'org.kordamp.gradle:jdeps-gradle-plugin:0.4.1'
     }
 }
 
 apply plugin: 'java'
 apply plugin: 'application'
+apply plugin: 'org.kordamp.jdeps'
 
 group 'ro.ghionoiu'
 
@@ -67,6 +69,16 @@ dependencies {
     // Uncomment if you run from IDE
 //    compile 'io.humble:humble-video-arch-x86_64-apple-darwin12:'+humbleVideoVersion
 
+    // The needed modules to duff the Java 9 and higher modularisation runtime error messages:
+    // Java 9 and 10:
+    //       java.lang.NoClassDefFoundError: javax/xml/bind/JAXBException
+    //       java.lang.NoClassDefFoundError: javax/activation/JAXBException
+    //
+    // Java 11 and higher:
+    //      Error occurred during initialization of boot layer
+    //      java.lang.module.FindException: Module java.xml.bind not found
+    compile 'javax.xml.bind:jaxb-api:2.2.11'
+    compile 'javax.activation:activation:1.1.1'
 
     testCompile('junit:junit:4.11'){
         exclude group: 'org.hamcrest', module: 'hamcrest-core'
@@ -85,6 +97,41 @@ jar {
     manifest {
         attributes "Main-Class": "$mainClassName"
     }
+}
+
+// ~~~~~ Listing dependencies using jdeps
+// ~~~~~ See https://github.com/aalmiray/jdeps-gradle-plugin
+// CLI examples of getting similar reports:
+//   $ ./gradlew clean mavenCapsule                    <=== required to generate the uber jar
+//
+//   $ jdeps build/libs/record-and-upload-0.0.16-SNAPSHOT-capsule.jar
+//   $ jdeps -recursive -verbose build/libs/record-and-upload-0.0.16-SNAPSHOT-capsule.jar
+//   $ jdeps -cp 'build/classes/*' -verbose -profile -recursive build/libs/record-and-upload-0.0.16-SNAPSHOT-capsule.jar
+//   $ jdeps -recursive -profile -verbose build/libs/record-and-upload-0.0.16-SNAPSHOT-capsule.jar
+//   $ jdeps -I --api-only  --dot-output record-and-upload-deps  build/libs/record-and-upload-0.0.16-SNAPSHOT-capsule.jar
+//
+// Although 'jdeps' task, generates a more comprehensive report by going through the packages and modules of the project and also its direct dependencies
+
+// How to run manually, as it is disabled by default (skips gradle build cycle)?
+// 
+//    $ ./gradlew clean jdeps -PenableJdeps
+// or 
+// 
+//    $ ./gradlew clean build -PenableJdeps
+//
+// the above will include the 'jdeps' task as part of the gradle build cycle
+
+jdeps {
+    sourceSets = ['main', 'test']
+    configurations = ['testRuntime']
+    recursive = true
+    failOnError = false
+    consoleOutput = true
+    profile = true
+    verbose = true
+    jdkinternals = false
+
+    enabled = project.hasProperty("enableJdeps")
 }
 
 task mavenCapsule(type: MavenCapsule){
