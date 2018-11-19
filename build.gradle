@@ -112,6 +112,15 @@ jar {
 //
 // Although 'jdeps' task, generates a more comprehensive report by going through the packages and modules of the project and also its direct dependencies
 
+// How to run manually, as it is disabled by default (skips gradle build cycle)?
+// 
+//    $ ./gradlew clean jdeps -PenableJdeps
+// or 
+// 
+//    $ ./gradlew clean build -PenableJdeps
+//
+// the above will include the 'jdeps' task as part of the gradle build cycle
+
 jdeps {
     sourceSets = ['main', 'test']
     configurations = ['testRuntime']
@@ -121,6 +130,8 @@ jdeps {
     profile = true
     verbose = true
     jdkinternals = false
+
+    enabled = project.hasProperty("enableJdeps")
 }
 
 task mavenCapsule(type: MavenCapsule){
