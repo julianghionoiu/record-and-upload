@@ -10,6 +10,7 @@ buildscript {
         classpath 'us.kirchmeier:gradle-capsule-plugin:1.0.2'
         classpath 'ch.netzwerg:gradle-release-plugin:1.2.4'
         classpath 'org.kordamp.gradle:jdeps-gradle-plugin:0.4.1'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
     }
 }
 
@@ -89,6 +90,8 @@ dependencies {
 }
 
 // ~~~~~ Packaging
+
+apply plugin: 'com.github.johnrengelman.shadow'
 
 apply plugin: 'us.kirchmeier.capsule'
 
