@@ -11,7 +11,7 @@ scripts/packr-scripts/*.jar
 !scripts/packr-scripts/packr.jar
 scripts/packr-scripts/linux/record-and-upload/*
 scripts/packr-scripts/linux/*.zip
-scripts/packr-scripts/osx/record-and-upload/*
-scripts/packr-scripts/osx/*.zip
+scripts/packr-scripts/macos/record-and-upload/*
+scripts/packr-scripts/macos/*.zip
 scripts/packr-scripts/windows/record-and-upload/*
 scripts/packr-scripts/windows/*.zip
