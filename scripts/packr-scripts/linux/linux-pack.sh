@@ -1,14 +1,23 @@
 #!/bin/bash
 
+set -e
+set -u
+set -o pipefail
+
 source ../linux-common-env-variables.sh
 
 JRE_ZIP_FILE_NAME=$(ls jre*.zip) #jre1.8.0_152.zip
 
-if [[ -z ${JRE_ZIP_FILE_NAME} ]]; then
+if [[ ! -s ${JRE_ZIP_FILE_NAME} ]]; then
    echo "JRE for Linux was not found, please place one of them in the current directory and try running the script again."
    echo "Process halted."
-else 
-   echo "${JRE_ZIP_FILE_NAME}: JRE for Linux found."
+   exit -1
+fi
+
+if [[ ! -s ${RECORD_AND_UPLOAD_JAR} ]]; then
+   echo "Jar file ${RECORD_AND_UPLOAD_JAR} not found"
+   echo "Process halted."
+   exit -1
 fi
 
 echo 

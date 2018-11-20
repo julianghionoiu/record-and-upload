@@ -1,5 +1,9 @@
 #!/bin/bash
 
+set -e
+set -u
+set -o pipefail
+
 source ../linux-common-env-variables.sh
 
 JRE_ZIP_FILE_NAME=$(ls jdk*.zip) #jdk1.8.0_111.zip
@@ -7,8 +11,13 @@ JRE_ZIP_FILE_NAME=$(ls jdk*.zip) #jdk1.8.0_111.zip
 if [[ -z ${JRE_ZIP_FILE_NAME} ]]; then
    echo "JRE for Windows was not found, please place one of them in the current directory and try running the script again."
    echo "Process halted."
-else 
-   echo "${JRE_ZIP_FILE_NAME}: JRE for Windows found."
+   exit -1
+fi
+
+if [[ ! -s ${RECORD_AND_UPLOAD_JAR} ]]; then
+   echo "Jar file ${RECORD_AND_UPLOAD_JAR} not found"
+   echo "Process halted."
+   exit -1
 fi
 
 echo 
