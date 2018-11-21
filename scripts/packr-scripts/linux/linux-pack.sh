@@ -14,10 +14,11 @@ if [[ ! -s ${JRE_ZIP_FILE_NAME} ]]; then
    exit -1
 fi
 
+RECORD_AND_UPLOAD_JAR=record-and-upload.jar
 if [[ ! -s ${RECORD_AND_UPLOAD_JAR} ]]; then
    echo "Jar file ${RECORD_AND_UPLOAD_JAR} not found"
-   echo "Process halted."
-   exit -1
+   cd ../../.. && ./gradlew clean shadowJar && cd -
+   cp ../../../build/libs/${PACKAGE_NAME}*-all.jar ${RECORD_AND_UPLOAD_JAR}
 fi
 
 echo 
@@ -25,7 +26,7 @@ echo "*** Removing the old image folders: ${PACKR_TARGET_FOLDER} ***"
 rm -fr ${PACKR_TARGET_FOLDER} || true
 
 echo 
-echo "*** Building ${PACKAGE_NAME} image using packr ***"
+echo "*** Building '${PACKAGE_NAME}' image using packr ***"
 time java -jar ../packr.jar \
      --platform linux64 \
      --executable ${EXE_NAME} \
@@ -33,7 +34,19 @@ time java -jar ../packr.jar \
      --jdk ${JRE_ZIP_FILE_NAME} \
      --mainclass tdl.record_upload.RecordAndUploadApp \
      --vmargs Xmx2G \
-     --minimizejre ../reduced-jre.json \
      --output ${PACKR_TARGET_FOLDER}
 
-time cd ${PACKR_TARGET_FOLDER} && zip -r ../${ZIP_ARCHIVE_NAME} .
+HUMBLE_LINUX_LIB=libhumblevideo.so
+echo "*** Uncompressing  ${HUMBLE_LINUX_LIB} from ${RECORD_AND_UPLOAD_JAR} into '${PACKR_TARGET_FOLDER}' ***"
+unzip -o ${PACKR_TARGET_FOLDER}/${RECORD_AND_UPLOAD_JAR} ${HUMBLE_LINUX_LIB}
+mv ${HUMBLE_LINUX_LIB} ${PACKR_TARGET_FOLDER}
+
+echo "*** Removing ${HUMBLE_LINUX_LIB} from ${RECORD_AND_UPLOAD_JAR} in '${PACKR_TARGET_FOLDER}' ***"
+zip -d ${PACKR_TARGET_FOLDER}/${RECORD_AND_UPLOAD_JAR} ${HUMBLE_LINUX_LIB}
+
+echo "*** Compressing '${PACKR_TARGET_FOLDER}' into '${ZIP_ARCHIVE_NAME}' ***"
+time zip -r ${ZIP_ARCHIVE_NAME} ${PACKR_TARGET_FOLDER}
+
+# Enable for debug purposes
+#echo "./record-and-upload --config /config/credentials.config --store /localstore/" > record/runJar.sh
+#chmod +x record/runJar.sh

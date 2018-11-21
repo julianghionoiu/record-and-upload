@@ -1,8 +1,9 @@
 RECORD_AND_UPLOAD_JAR="../record-and-upload.jar"
 PACKAGE_NAME=record-and-upload
 EXE_NAME=record-and-upload
-PACKR_TARGET_FOLDER=record-and-upload
+PACKR_TARGET_FOLDER=record
 ZIP_ARCHIVE_NAME=record-and-upload.zip
+TAR_ARCHIVE_NAME=record-and-upload.tgz
 
 MAINTAINER_NAME="Accelerate.io"
 PACKAGE_DESCRIPTION="..."
