@@ -38,14 +38,14 @@ time java -jar ../packr.jar \
 
 HUMBLE_LINUX_LIB=libhumblevideo.so
 echo "*** Uncompressing  ${HUMBLE_LINUX_LIB} from ${RECORD_AND_UPLOAD_JAR} into '${PACKR_TARGET_FOLDER}' ***"
-unzip -o ${PACKR_TARGET_FOLDER}/${RECORD_AND_UPLOAD_JAR} ${HUMBLE_LINUX_LIB}
+time unzip -o ${PACKR_TARGET_FOLDER}/${RECORD_AND_UPLOAD_JAR} ${HUMBLE_LINUX_LIB}
 mv ${HUMBLE_LINUX_LIB} ${PACKR_TARGET_FOLDER}
 
 echo "*** Removing ${HUMBLE_LINUX_LIB} from ${RECORD_AND_UPLOAD_JAR} in '${PACKR_TARGET_FOLDER}' ***"
-zip -d ${PACKR_TARGET_FOLDER}/${RECORD_AND_UPLOAD_JAR} ${HUMBLE_LINUX_LIB}
+time zip -d ${PACKR_TARGET_FOLDER}/${RECORD_AND_UPLOAD_JAR} ${HUMBLE_LINUX_LIB}
 
 echo "*** Compressing '${PACKR_TARGET_FOLDER}' into '${ZIP_ARCHIVE_NAME}' ***"
-time zip -r ${ZIP_ARCHIVE_NAME} ${PACKR_TARGET_FOLDER}
+time zip -9 -r ${ZIP_ARCHIVE_NAME} ${PACKR_TARGET_FOLDER}
 
 # Enable for debug purposes
 #echo "./record-and-upload --config /config/credentials.config --store /localstore/" > record/runJar.sh
