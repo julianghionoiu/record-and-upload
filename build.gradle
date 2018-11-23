@@ -104,10 +104,26 @@ dependencies {
     compile 'org.slf4j:slf4j-api:1.7.5'
     compile 'org.slf4j:slf4j-api:1.7.7'
     compile 'software.amazon.ion:ion-java:1.0.2'
-    compile 'io.humble:humble-video-arch-x86_64-pc-linux-gnu6:0.2.1'
-    compile 'io.humble:humble-video-arch-i686-pc-linux-gnu6:0.2.1'
-    compile 'io.humble:humble-video-noarch:0.2.1'
-    compile 'io.humble:humble-video-parent:0.2.1'
+    compile 'io.humble:humble-video-noarch:'+humbleVideoVersion
+    compile 'io.humble:humble-video-parent:'+humbleVideoVersion
+
+    if (project.hasProperty("linux")) {
+        println 'Linux version of the humble video version '+humbleVideoVersion+' will be bundled with the jar'
+        compile 'io.humble:humble-video-arch-x86_64-pc-linux-gnu6:'+humbleVideoVersion
+        compile 'io.humble:humble-video-arch-i686-pc-linux-gnu6:'+humbleVideoVersion
+    }
+
+    if (project.hasProperty("macos")) {
+        println 'MacOS version of the humble video version '+humbleVideoVersion+' will be bundled with the jar'
+        compile 'io.humble:humble-video-arch-x86_64-apple-darwin12:'+humbleVideoVersion
+        compile 'io.humble:humble-video-arch-i686-apple-darwin12:'+humbleVideoVersion
+    }
+
+    if (project.hasProperty("windows")) {
+        println 'Windows version of the humble video version '+humbleVideoVersion+' will be bundled with the jar'
+        compile 'io.humble:humble-video-arch-x86_64-w64-mingw32:'+humbleVideoVersion
+        compile 'io.humble:humble-video-arch-i686-w64-mingw32:'+humbleVideoVersion
+    }
 
     // Uncomment if you run from IDE
 //    compile 'io.humble:humble-video-arch-x86_64-apple-darwin12:'+humbleVideoVersion
