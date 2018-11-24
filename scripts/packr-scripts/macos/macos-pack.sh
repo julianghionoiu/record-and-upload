@@ -4,7 +4,7 @@ set -e
 set -u
 set -o pipefail
 
-source ../linux-common-env-variables.sh
+source ../common-env-variables.sh
 
 JRE_ZIP_FILE_NAME=$(ls jre*.zip) #jre1.8.0_101-osx.zip
 
@@ -24,6 +24,11 @@ echo
 echo "*** Removing the old image folders: ${PACKR_TARGET_FOLDER} ***"
 rm -fr ${PACKR_TARGET_FOLDER} || true
 
+ZIP_ARCHIVE_NAME=$(getZipArchiveName "macos")
+echo 
+echo "*** Removing the old ${ZIP_ARCHIVE_NAME} archive ***"
+rm -fr ${ZIP_ARCHIVE_NAME} || true
+
 time java -jar ../packr.jar \
      --platform mac \
      --executable ${EXE_NAME} \
@@ -33,5 +38,5 @@ time java -jar ../packr.jar \
      --vmargs Xmx2G \
      --minimizejre ../reduced-jre.json \
      --output ${PACKR_TARGET_FOLDER}
-     
+   
 time cd ${PACKR_TARGET_FOLDER} && zip -r ../${ZIP_ARCHIVE_NAME} .

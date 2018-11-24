@@ -4,7 +4,7 @@ set -e
 set -u
 set -o pipefail
 
-source ../linux-common-env-variables.sh
+source ../common-env-variables.sh
 
 JRE_ZIP_FILE_NAME=$(ls jre*.zip) #jre1.8.0_152.zip
 
@@ -18,12 +18,12 @@ fi
 # after the release process has push the artifact to github
 # the artifact will contain the OS specific humble video and the uber jar for record-and-upload
 TARGET_JAR_FILE=record-and-upload
-JAR_VERSION=$(git describe --abbrev=0 --tags)
-RECORD_AND_UPLOAD_JAR=${TARGET_JAR_FILE}-${JAR_VERSION}.jar
+RELEASE_VERSION=$(git describe --abbrev=0 --tags)
+RECORD_AND_UPLOAD_JAR=${TARGET_JAR_FILE}-${RELEASE_VERSION}.jar
 if [[ ! -s ${RECORD_AND_UPLOAD_JAR} ]]; then
    echo "Jar file ${RECORD_AND_UPLOAD_JAR} not found"
    echo "Downloading ${RECORD_AND_UPLOAD_JAR} from github"
-   wget https://github.com/julianghionoiu/record-and-upload/releases/download/${JAR_VERSION}/${RECORD_AND_UPLOAD_JAR} ${TARGET_JAR_FILE}
+   wget https://github.com/julianghionoiu/record-and-upload/releases/download/${RELEASE_VERSION}/${RECORD_AND_UPLOAD_JAR} ${TARGET_JAR_FILE}
 fi
 
 echo 
@@ -42,6 +42,7 @@ time java -jar ../packr.jar \
      --output ${PACKR_TARGET_FOLDER}
 
 HUMBLE_LINUX_LIB=libhumblevideo.so
+ZIP_ARCHIVE_NAME=$(getZipArchiveName "${RELEASE_VERSION}-linux")
 echo "*** Uncompressing  ${HUMBLE_LINUX_LIB} from ${RECORD_AND_UPLOAD_JAR} into '${PACKR_TARGET_FOLDER}' ***"
 time unzip -o ${PACKR_TARGET_FOLDER}/${RECORD_AND_UPLOAD_JAR} ${HUMBLE_LINUX_LIB}
 mv ${HUMBLE_LINUX_LIB} ${PACKR_TARGET_FOLDER}
@@ -50,7 +51,7 @@ echo "*** Removing ${HUMBLE_LINUX_LIB} from ${RECORD_AND_UPLOAD_JAR} in '${PACKR
 time zip -d ${PACKR_TARGET_FOLDER}/${RECORD_AND_UPLOAD_JAR} ${HUMBLE_LINUX_LIB}
 
 echo "*** Compressing '${PACKR_TARGET_FOLDER}' into '${ZIP_ARCHIVE_NAME}' ***"
-time zip -9 -r ${ZIP_ARCHIVE_NAME} ${PACKR_TARGET_FOLDER}
+time zip -r ${ZIP_ARCHIVE_NAME} ${PACKR_TARGET_FOLDER}
 
 # Enable for debug purposes
 #echo "./record-and-upload --config /config/credentials.config --store /localstore/" > record/runJar.sh

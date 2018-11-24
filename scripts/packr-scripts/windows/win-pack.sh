@@ -4,7 +4,7 @@ set -e
 set -u
 set -o pipefail
 
-source ../linux-common-env-variables.sh
+source ../common-env-variables.sh
 
 JRE_ZIP_FILE_NAME=$(ls jdk*.zip) #jdk1.8.0_111.zip
 
@@ -24,6 +24,7 @@ echo
 echo "*** Removing the old image folder: ${PACKR_TARGET_FOLDER} ***"
 rm -fr ${PACKR_TARGET_FOLDER} || true
 
+ZIP_ARCHIVE_NAME=$(getZipArchiveName "windows")
 echo 
 echo "*** Removing the old ${ZIP_ARCHIVE_NAME} archive ***"
 rm -fr ${ZIP_ARCHIVE_NAME} || true
