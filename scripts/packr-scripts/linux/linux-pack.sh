@@ -14,11 +14,16 @@ if [[ ! -s ${JRE_ZIP_FILE_NAME} ]]; then
    exit -1
 fi
 
-RECORD_AND_UPLOAD_JAR=record-and-upload.jar
+# This would be a wget command that downloads the jar from the record-and-upload git repo
+# after the release process has push the artifact to github
+# the artifact will contain the OS specific humble video and the uber jar for record-and-upload
+TARGET_JAR_FILE=record-and-upload
+JAR_VERSION=$(git describe --abbrev=0 --tags)
+RECORD_AND_UPLOAD_JAR=${TARGET_JAR_FILE}-${JAR_VERSION}.jar
 if [[ ! -s ${RECORD_AND_UPLOAD_JAR} ]]; then
    echo "Jar file ${RECORD_AND_UPLOAD_JAR} not found"
-   cd ../../.. && ./gradlew clean shadowJar && cd -
-   cp ../../../build/libs/${PACKAGE_NAME}*-all.jar ${RECORD_AND_UPLOAD_JAR}
+   echo "Downloading ${RECORD_AND_UPLOAD_JAR} from github"
+   wget https://github.com/julianghionoiu/record-and-upload/releases/download/${JAR_VERSION}/${RECORD_AND_UPLOAD_JAR} ${TARGET_JAR_FILE}
 fi
 
 echo 
