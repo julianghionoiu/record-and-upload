@@ -20,6 +20,8 @@ fi
 TARGET_JAR_FILE=record-and-upload
 RELEASE_VERSION=$(git describe --abbrev=0 --tags)
 RECORD_AND_UPLOAD_JAR=${TARGET_JAR_FILE}-${RELEASE_VERSION}.jar
+TGZ_ARCHIVE_NAME=$(getArchiveName "${RELEASE_VERSION}-linux" "tgz")
+
 if [[ ! -s ${RECORD_AND_UPLOAD_JAR} ]]; then
    echo "Jar file ${RECORD_AND_UPLOAD_JAR} not found"
    echo "Downloading ${RECORD_AND_UPLOAD_JAR} from github"
@@ -42,7 +44,6 @@ time java -jar ../packr.jar \
      --output ${PACKR_TARGET_FOLDER}
 
 HUMBLE_LINUX_LIB=libhumblevideo.so
-ZIP_ARCHIVE_NAME=$(getZipArchiveName "${RELEASE_VERSION}-linux")
 echo "*** Uncompressing  ${HUMBLE_LINUX_LIB} from ${RECORD_AND_UPLOAD_JAR} into '${PACKR_TARGET_FOLDER}' ***"
 time unzip -o ${PACKR_TARGET_FOLDER}/${RECORD_AND_UPLOAD_JAR} ${HUMBLE_LINUX_LIB}
 mv ${HUMBLE_LINUX_LIB} ${PACKR_TARGET_FOLDER}
@@ -50,8 +51,8 @@ mv ${HUMBLE_LINUX_LIB} ${PACKR_TARGET_FOLDER}
 echo "*** Removing ${HUMBLE_LINUX_LIB} from ${RECORD_AND_UPLOAD_JAR} in '${PACKR_TARGET_FOLDER}' ***"
 time zip -d ${PACKR_TARGET_FOLDER}/${RECORD_AND_UPLOAD_JAR} ${HUMBLE_LINUX_LIB}
 
-echo "*** Compressing '${PACKR_TARGET_FOLDER}' into '${ZIP_ARCHIVE_NAME}' ***"
-time zip -r ${ZIP_ARCHIVE_NAME} ${PACKR_TARGET_FOLDER}
+echo "*** Compressing '${PACKR_TARGET_FOLDER}' into '${TGZ_ARCHIVE_NAME}' ***"
+time tar -czvf ${TGZ_ARCHIVE_NAME} ${PACKR_TARGET_FOLDER}
 
 # Enable for debug purposes
 #echo "./record-and-upload --config /config/credentials.config --store /localstore/" > record/runJar.sh
