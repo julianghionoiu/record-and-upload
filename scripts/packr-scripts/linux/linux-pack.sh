@@ -17,20 +17,23 @@ fi
 # This would be a wget command that downloads the jar from the record-and-upload git repo
 # after the release process has push the artifact to github
 # the artifact will contain the OS specific humble video and the uber jar for record-and-upload
-TARGET_JAR_FILE=record-and-upload
 RELEASE_VERSION=$(git describe --abbrev=0 --tags)
-RECORD_AND_UPLOAD_JAR=${TARGET_JAR_FILE}-${RELEASE_VERSION}.jar
+RECORD_AND_UPLOAD_JAR=${PACKAGE_NAME}-${RELEASE_VERSION}.jar
 TGZ_ARCHIVE_NAME=$(getArchiveName "${RELEASE_VERSION}-linux" "tgz")
 
 if [[ ! -s ${RECORD_AND_UPLOAD_JAR} ]]; then
    echo "Jar file ${RECORD_AND_UPLOAD_JAR} not found"
    echo "Downloading ${RECORD_AND_UPLOAD_JAR} from github"
-   wget https://github.com/julianghionoiu/record-and-upload/releases/download/${RELEASE_VERSION}/${RECORD_AND_UPLOAD_JAR} ${TARGET_JAR_FILE}
+   wget https://github.com/julianghionoiu/record-and-upload/releases/download/${RELEASE_VERSION}/${RECORD_AND_UPLOAD_JAR} ${PACKAGE_NAME}
 fi
 
 echo 
 echo "*** Removing the old image folders: ${PACKR_TARGET_FOLDER} ***"
 rm -fr ${PACKR_TARGET_FOLDER} || true
+
+echo
+echo "*** Removing the old ${TGZ_ARCHIVE_NAME} archive ***"
+rm -fr ${TGZ_ARCHIVE_NAME} || true
 
 echo 
 echo "*** Building '${PACKAGE_NAME}' image using packr ***"
