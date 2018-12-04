@@ -30,6 +30,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -116,7 +117,8 @@ public class RecordAndUploadApp {
             // Start processing
             run(params.localStorageFolder,
                     uploadDestination,
-                    videoRecordingTask, sourceCodeRecordingTask
+                    videoRecordingTask,
+                    sourceCodeRecordingTask
             );
         } catch (DestinationOperationException e) {
             log.error("User does not have enough permissions to upload. Reason: {}", e.getMessage());
@@ -133,19 +135,15 @@ public class RecordAndUploadApp {
         List<MonitoredSubject> monitoredSubjects = new ArrayList<>();
         ExternalEventServerThread externalEventServerThread = new ExternalEventServerThread();
 
-        // Start video recording
-        videoRecordingTask.start();
-        serviceThreadsToStop.add(videoRecordingTask);
-        monitoredSubjects.add(videoRecordingTask);
-        externalEventServerThread.addNotifyListener(videoRecordingTask);
-        externalEventServerThread.addStopListener(videoRecordingTask);
-
-        // Start sourcecode recording
-        sourceCodeRecordingTask.start();
-        serviceThreadsToStop.add(sourceCodeRecordingTask);
-        monitoredSubjects.add(sourceCodeRecordingTask);
-        externalEventServerThread.addNotifyListener(sourceCodeRecordingTask);
-        externalEventServerThread.addStopListener(sourceCodeRecordingTask);
+        // Start video and source code recording
+        for (MonitoredBackgroundTask monitoredBackgroundTask:
+                Arrays.asList(videoRecordingTask, sourceCodeRecordingTask)) {
+            monitoredBackgroundTask.start();
+            serviceThreadsToStop.add(monitoredBackgroundTask);
+            monitoredSubjects.add(monitoredBackgroundTask);
+            externalEventServerThread.addNotifyListener(monitoredBackgroundTask);
+            externalEventServerThread.addStopListener(monitoredBackgroundTask);
+        }
 
         // Start sync folder
         UploadStatsProgressListener uploadStatsProgressListener = new UploadStatsProgressListener();
