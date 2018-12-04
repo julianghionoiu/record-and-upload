@@ -4,18 +4,15 @@ import ch.qos.logback.classic.LoggerContext;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tdl.record.screen.metrics.VideoRecordingMetricsCollector;
-import tdl.record.sourcecode.metrics.SourceCodeRecordingMetricsCollector;
 import tdl.record_upload.events.ExternalEventServerThread;
 import tdl.record_upload.logging.LockableFileLoggingAppender;
-import tdl.record_upload.sourcecode.SourceCodeRecordingStatus;
+import tdl.record_upload.sourcecode.NoSourceCodeDummyThread;
 import tdl.record_upload.sourcecode.SourceCodeRecordingThread;
 import tdl.record_upload.upload.BackgroundRemoteSyncTask;
+import tdl.record_upload.upload.NoWorkDummyDestination;
 import tdl.record_upload.upload.UploadStatsProgressStatus;
 import tdl.record_upload.video.NoVideoDummyThread;
-import tdl.record_upload.video.VideoRecordingStatus;
 import tdl.record_upload.video.VideoRecordingThread;
 import tdl.s3.credentials.AWSSecretProperties;
 import tdl.s3.sync.destination.Destination;
@@ -48,8 +45,14 @@ public class RecordAndUploadApp {
         @Parameter(names = {"--sourcecode"}, description = "The folder that contains the source code that needs to be tracked")
         private String localSourceCodeFolder = ".";
 
-        @Parameter(names = "--no-video", description = "Disable video recording, use only source code")
+        @Parameter(names = "--no-video", description = "Disable video recording")
         private boolean doNotRecordVideo = false;
+
+        @Parameter(names = "--no-sourcecode", description = "Disable source code recording")
+        private boolean doNotRecordSourceCode = false;
+
+        @Parameter(names = "--no-sync", description = "Do not sync target folder")
+        private boolean doNotSync = false;
     }
 
 
@@ -68,18 +71,53 @@ public class RecordAndUploadApp {
             // Prepare remote destination
             AWSSecretProperties awsSecretProperties = AWSSecretProperties
                     .fromPlainTextFile(Paths.get(params.configFile));
-            Destination s3BucketDestination =  S3BucketDestination.builder()
-                    .awsClient(awsSecretProperties.createClient())
-                    .bucket(awsSecretProperties.getS3Bucket())
-                    .prefix(awsSecretProperties.getS3Prefix())
-                    .build();
+
+            boolean syncFolder = !params.doNotSync;
+            Destination uploadDestination;
+            if (syncFolder) {
+                uploadDestination = S3BucketDestination.builder()
+                        .awsClient(awsSecretProperties.createClient())
+                        .bucket(awsSecretProperties.getS3Bucket())
+                        .prefix(awsSecretProperties.getS3Prefix())
+                        .build();
+            } else {
+                uploadDestination = new NoWorkDummyDestination();
+            }
+
 
             // Validate destination
             log.info("Checking permissions");
-            s3BucketDestination.testUploadPermissions();
+            uploadDestination.testUploadPermissions();
+
+            // Timestamp
+            String timestamp = LocalDateTime.now().format(fileTimestampFormatter);
+
+            // Video recording
+            boolean recordVideo = !params.doNotRecordVideo;
+            MonitoredBackgroundTask videoRecordingTask;
+            if (recordVideo) {
+                File screenRecordingFile = Paths.get(params.localStorageFolder, "screencast_" + timestamp + ".mp4").toFile();
+                videoRecordingTask = new VideoRecordingThread(screenRecordingFile);
+            } else {
+                videoRecordingTask = new NoVideoDummyThread();
+            }
+
+            // Source code recording
+            boolean recordSourceCode = !params.doNotRecordSourceCode;
+            MonitoredBackgroundTask sourceCodeRecordingTask;
+            if (recordSourceCode) {
+                Path sourceCodeFolder = Paths.get(params.localSourceCodeFolder);
+                Path sourceCodeRecordingFile = Paths.get(params.localStorageFolder, "sourcecode_" + timestamp + ".srcs");
+                sourceCodeRecordingTask = new SourceCodeRecordingThread(sourceCodeFolder, sourceCodeRecordingFile);
+            } else {
+                sourceCodeRecordingTask = new NoSourceCodeDummyThread();
+            }
 
             // Start processing
-            run(params.localStorageFolder, params.localSourceCodeFolder, s3BucketDestination, params.doNotRecordVideo);
+            run(params.localStorageFolder,
+                    uploadDestination,
+                    videoRecordingTask, sourceCodeRecordingTask
+            );
         } catch (DestinationOperationException e) {
             log.error("User does not have enough permissions to upload. Reason: {}", e.getMessage());
         } catch (Exception e) {
@@ -89,26 +127,25 @@ public class RecordAndUploadApp {
 
     private static final DateTimeFormatter fileTimestampFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss");
     private static void run(String localStorageFolder,
-                            String localSourceCodeFolder,
                             Destination remoteDestination,
-                            boolean doNotRecordVideo) throws Exception {
-        String timestamp = LocalDateTime.now().format(fileTimestampFormatter);
+                            MonitoredBackgroundTask videoRecordingTask, MonitoredBackgroundTask sourceCodeRecordingTask) throws Exception {
         List<Stoppable> serviceThreadsToStop = new ArrayList<>();
         List<MonitoredSubject> monitoredSubjects = new ArrayList<>();
         ExternalEventServerThread externalEventServerThread = new ExternalEventServerThread();
 
         // Start video recording
-        boolean recordVideo = !doNotRecordVideo;
-        if (recordVideo) {
-            startVideoRecording(localStorageFolder, timestamp,
-                    serviceThreadsToStop, monitoredSubjects, externalEventServerThread);
-        } else {
-            showNoVideoWarning(serviceThreadsToStop, monitoredSubjects, externalEventServerThread);
-        }
+        videoRecordingTask.start();
+        serviceThreadsToStop.add(videoRecordingTask);
+        monitoredSubjects.add(videoRecordingTask);
+        externalEventServerThread.addNotifyListener(videoRecordingTask);
+        externalEventServerThread.addStopListener(videoRecordingTask);
 
         // Start sourcecode recording
-        startSourceCodeRecording(localStorageFolder, localSourceCodeFolder, timestamp,
-                serviceThreadsToStop, monitoredSubjects, externalEventServerThread);
+        sourceCodeRecordingTask.start();
+        serviceThreadsToStop.add(sourceCodeRecordingTask);
+        monitoredSubjects.add(sourceCodeRecordingTask);
+        externalEventServerThread.addNotifyListener(sourceCodeRecordingTask);
+        externalEventServerThread.addStopListener(sourceCodeRecordingTask);
 
         // Start sync folder
         UploadStatsProgressListener uploadStatsProgressListener = new UploadStatsProgressListener();
@@ -118,8 +155,7 @@ public class RecordAndUploadApp {
         monitoredSubjects.add(new UploadStatsProgressStatus(uploadStatsProgressListener));
 
         // Start the metrics reporting
-        MetricsReportingTask metricsReportingTask = new MetricsReportingTask(
-                monitoredSubjects);
+        MetricsReportingTask metricsReportingTask = new MetricsReportingTask(monitoredSubjects);
         metricsReportingTask.scheduleReportMetricsEvery(Duration.of(2, ChronoUnit.SECONDS));
 
         // Start the event server
@@ -145,45 +181,6 @@ public class RecordAndUploadApp {
 
         // Forcefully stop. A problem with Jetty finalisation might prevent the JVM from stopping
         Runtime.getRuntime().halt(0);
-    }
-
-    private static void startVideoRecording(String localStorageFolder, String timestamp,
-                                            List<Stoppable> serviceThreadsToStop,
-                                            List<MonitoredSubject> monitoredSubjects,
-                                            ExternalEventServerThread externalEventServerThread) {
-        File screenRecordingFile = Paths.get(localStorageFolder, "screencast_" + timestamp + ".mp4").toFile();
-        VideoRecordingMetricsCollector videoRecordingMetricsCollector = new VideoRecordingMetricsCollector();
-        VideoRecordingThread videoRecordingThread = new VideoRecordingThread(screenRecordingFile, videoRecordingMetricsCollector);
-        videoRecordingThread.start();
-        serviceThreadsToStop.add(videoRecordingThread);
-        monitoredSubjects.add(new VideoRecordingStatus(videoRecordingMetricsCollector));
-        externalEventServerThread.addStopListener(eventPayload -> videoRecordingThread.signalStop());
-    }
-
-    private static void showNoVideoWarning(List<Stoppable> serviceThreadsToStop,
-                                           List<MonitoredSubject> monitoredSubjects,
-                                           ExternalEventServerThread externalEventServerThread) {
-        NoVideoDummyThread noVideo = new NoVideoDummyThread();
-        serviceThreadsToStop.add(noVideo);
-        monitoredSubjects.add(noVideo);
-        externalEventServerThread.addStopListener(eventPayload -> noVideo.signalStop());
-
-    }
-
-    private static void startSourceCodeRecording(String localStorageFolder, String localSourceCodeFolder, String timestamp,
-                                                 List<Stoppable> serviceThreadsToStop,
-                                                 List<MonitoredSubject> monitoredSubjects,
-                                                 ExternalEventServerThread externalEventServerThread) {
-        Path sourceCodeFolder = Paths.get(localSourceCodeFolder);
-        Path sourceCodeRecordingFile = Paths.get(localStorageFolder, "sourcecode_" + timestamp + ".srcs");
-        SourceCodeRecordingMetricsCollector sourceCodeRecordingMetricsCollector = new SourceCodeRecordingMetricsCollector();
-        SourceCodeRecordingThread sourceCodeRecordingThread = new SourceCodeRecordingThread(sourceCodeFolder, sourceCodeRecordingFile,
-                sourceCodeRecordingMetricsCollector);
-        sourceCodeRecordingThread.start();
-        serviceThreadsToStop.add(sourceCodeRecordingThread);
-        monitoredSubjects.add(new SourceCodeRecordingStatus(sourceCodeRecordingMetricsCollector));
-        externalEventServerThread.addNotifyListener(sourceCodeRecordingThread::tagCurrentState);
-        externalEventServerThread.addStopListener(eventPayload -> sourceCodeRecordingThread.signalStop());
     }
 
     private static void registerShutdownHook(List<Stoppable> servicesToStop) {

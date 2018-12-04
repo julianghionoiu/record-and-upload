@@ -69,8 +69,8 @@ public class ExternalEventServerThread implements Stoppable {
         notifyListeners.add(externalEventListener);
     }
 
-    public void addStopListener(ExternalEventListener externalEventListener) {
-        stopListeners.add(externalEventListener);
+    public void addStopListener(Stoppable stoppableComponent) {
+        stopListeners.add(eventPayload -> stoppableComponent.signalStop());
     }
 
     //~~~~~~~~~ The commands that are being handled
@@ -99,7 +99,7 @@ public class ExternalEventServerThread implements Stoppable {
 
             try {
                 for (ExternalEventListener externalEventListener : listeners) {
-                    externalEventListener.process(body.trim());
+                    externalEventListener.onExternalEvent(body.trim());
                 }
                 resp.setContentType("text/plain");
                 resp.setStatus(HttpServletResponse.SC_OK);
