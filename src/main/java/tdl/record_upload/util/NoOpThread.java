@@ -3,14 +3,14 @@ package tdl.record_upload.util;
 import org.slf4j.Logger;
 import tdl.record_upload.MonitoredBackgroundTask;
 
-public class DummyThread extends Thread implements MonitoredBackgroundTask {
+public class NoOpThread extends Thread implements MonitoredBackgroundTask {
     private boolean isRunning;
     private int tick;
-    private DummyMessageProvider dummyMessageProvider;
+    private NoOpMessageProvider noOpMessageProvider;
 
 
-    public DummyThread(DummyMessageProvider dummyMessageProvider) {
-        this.dummyMessageProvider = dummyMessageProvider;
+    public NoOpThread(NoOpMessageProvider noOpMessageProvider) {
+        this.noOpMessageProvider = noOpMessageProvider;
         isRunning = true;
         tick = 0;
     }
@@ -40,7 +40,7 @@ public class DummyThread extends Thread implements MonitoredBackgroundTask {
     @Override
     public void displayMetrics(StringBuilder displayBuffer) {
         tick += 1;
-        displayBuffer.append(dummyMessageProvider.messageFor(tick));
+        displayBuffer.append(noOpMessageProvider.messageFor(tick));
     }
 
     @Override

@@ -7,12 +7,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import tdl.record_upload.events.ExternalEventServerThread;
 import tdl.record_upload.logging.LockableFileLoggingAppender;
-import tdl.record_upload.sourcecode.NoSourceCodeDummyThread;
+import tdl.record_upload.sourcecode.NoOpSourceCodeThread;
 import tdl.record_upload.sourcecode.SourceCodeRecordingThread;
 import tdl.record_upload.upload.BackgroundRemoteSyncTask;
-import tdl.record_upload.upload.NoWorkDummyDestination;
+import tdl.record_upload.upload.NoOpDestination;
 import tdl.record_upload.upload.UploadStatsProgressStatus;
-import tdl.record_upload.video.NoVideoDummyThread;
+import tdl.record_upload.video.NoOpVideoThread;
 import tdl.record_upload.video.VideoRecordingThread;
 import tdl.s3.credentials.AWSSecretProperties;
 import tdl.s3.sync.destination.Destination;
@@ -82,7 +82,7 @@ public class RecordAndUploadApp {
                         .prefix(awsSecretProperties.getS3Prefix())
                         .build();
             } else {
-                uploadDestination = new NoWorkDummyDestination();
+                uploadDestination = new NoOpDestination();
             }
 
 
@@ -97,10 +97,13 @@ public class RecordAndUploadApp {
             boolean recordVideo = !params.doNotRecordVideo;
             MonitoredBackgroundTask videoRecordingTask;
             if (recordVideo) {
-                File screenRecordingFile = Paths.get(params.localStorageFolder, "screencast_" + timestamp + ".mp4").toFile();
+                File screenRecordingFile = Paths.get(
+                        params.localStorageFolder,
+                        String.format("screencast_%s.mp4", timestamp)
+                ).toFile();
                 videoRecordingTask = new VideoRecordingThread(screenRecordingFile);
             } else {
-                videoRecordingTask = new NoVideoDummyThread();
+                videoRecordingTask = new NoOpVideoThread();
             }
 
             // Source code recording
@@ -108,10 +111,13 @@ public class RecordAndUploadApp {
             MonitoredBackgroundTask sourceCodeRecordingTask;
             if (recordSourceCode) {
                 Path sourceCodeFolder = Paths.get(params.localSourceCodeFolder);
-                Path sourceCodeRecordingFile = Paths.get(params.localStorageFolder, "sourcecode_" + timestamp + ".srcs");
+                Path sourceCodeRecordingFile = Paths.get(
+                        params.localStorageFolder,
+                        String.format("sourcecode_%s.srcs", timestamp)
+                );
                 sourceCodeRecordingTask = new SourceCodeRecordingThread(sourceCodeFolder, sourceCodeRecordingFile);
             } else {
-                sourceCodeRecordingTask = new NoSourceCodeDummyThread();
+                sourceCodeRecordingTask = new NoOpSourceCodeThread();
             }
 
             // Start processing

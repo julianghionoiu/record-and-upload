@@ -9,7 +9,7 @@ import tdl.s3.upload.MultipartUploadResult;
 import java.util.Collections;
 import java.util.List;
 
-public class NoWorkDummyDestination implements Destination {
+public class NoOpDestination implements Destination {
     @Override
     public void testUploadPermissions() {
         // All good
