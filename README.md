@@ -44,6 +44,18 @@ This will grate a maven based Jar that will download the required dependencies b
 
 #### Running and building with pre-Java 9 versions
 
+**Standalone OS-specific**
+
+```bash
+./gradlew clean mavenCapsule -Plinux
+./gradlew clean mavenCapsule -Pmacos
+./gradlew clean mavenCapsule -Pwindows
+
+java -jar ./build/libs/record-and-upload-`cat version.txt`-capsule.jar --config .private/aws-test-secrets --store ./build/play
+```
+**Note:** you can build a target jar on any OS, its an any OS to any OS process.
+
+**OS independent**
 ```bash
 ./gradlew clean mavenCapsule
 rm -R ~/.capsule/deps/ro
@@ -54,11 +66,26 @@ java -jar ./build/libs/record-and-upload-`cat version.txt`-capsule.jar --config 
 
 Ensure `JAVA_HOME` points to the Java 9 SDK home folder. Use `java -version` to check if the java launcher on the `PATH` is version 9.0 (aka 1.9) or higher.
 
+**Standalone OS-specific**
+
+```bash
+./gradlew clean mavenCapsule -Plinux
+./gradlew clean mavenCapsule -Pmacos
+./gradlew clean mavenCapsule -Pwindows
+
+java -jar ./build/libs/record-and-upload-`cat version.txt`-capsule.jar --config .private/aws-test-secrets --store ./build/play
+```
+
+**Note:** you can build a target jar on any OS, its an any OS to any OS process.
+
+**OS independent**
 ```bash
 ./gradlew clean mavenCapsule
 rm -R ~/.capsule/deps/ro
 java --illegal-access=warn  --add-modules=java.xml.bind,java.activation -jar ./build/libs/record-and-upload-`cat version.txt`-capsule.jar --config .private/aws-test-secrets --store ./build/play
 ```
+
+**Note:** we do not need to specify the modules at runtime as we have added them to our jars during build time
 
 To generate test files you could run
 ```bash
