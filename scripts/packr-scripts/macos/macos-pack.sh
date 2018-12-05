@@ -30,15 +30,17 @@ time java -jar ../packr.jar \
      --executable ${EXE_NAME} \
      --classpath ${RECORD_AND_UPLOAD_JAR} \
      --jdk ${JRE_ZIP_FILE_NAME} \
-     --mainclass tdl.record_upload.RecordAndUploadApp \
      --vmargs Xmx2G \
-     --minimizejre ../reduced-jre.json \
+     --mainclass tdl.record_upload.RecordAndUploadApp \
      --output ${PACKR_TARGET_FOLDER}
 
 HUMBLE_MACOS_LIB=libhumblevideo.dylib
 echo "*** Uncompressing  ${HUMBLE_MACOS_LIB} from ${RECORD_AND_UPLOAD_JAR} into '${PACKR_TARGET_FOLDER}' ***"
 time unzip -o ${PACKR_TARGET_FOLDER}/Contents/Resources/${RECORD_AND_UPLOAD_JAR} ${HUMBLE_MACOS_LIB}
-mv ${HUMBLE_MACOS_LIB} ${PACKR_TARGET_FOLDER}/Contents/MacOS/
+mv ${HUMBLE_MACOS_LIB} ${PACKR_TARGET_FOLDER}/Contents/Resources/
+
+echo "*** Making the commands in the bin directory of the JRE executable ***"
+chmod +x ${PACKR_TARGET_FOLDER}/Contents/Resources/jre/bin/*
 
 echo "*** Removing ${HUMBLE_MACOS_LIB} from ${RECORD_AND_UPLOAD_JAR} in '${PACKR_TARGET_FOLDER}' ***"
 time zip -d ${PACKR_TARGET_FOLDER}/Contents/Resources/${RECORD_AND_UPLOAD_JAR} ${HUMBLE_MACOS_LIB}
