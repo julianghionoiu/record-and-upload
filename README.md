@@ -99,3 +99,53 @@ To generate test files you could run
 git push --tags
 git push
 ```
+
+### To build OS specific packages (contain OS specific jars)
+
+Ensure the OS-specific jars have been built and available in the `build/libs/` folder
+
+#### Linux
+
+```
+./scripts/create-os-specific-package.sh linux tgz
+
+```
+
+#### MacOS
+
+```
+./scripts/create-os-specific-package.sh macos tgz
+
+```
+
+#### Windows
+
+```
+./scripts/create-os-specific-package.sh windows zip
+
+```
+
+### To release OS specific packages (contain OS specific jars)
+
+Ensure the OS-specific packages have been built and available in the respective OS folders under `scripts/packr-scripts/`
+
+#### Linux
+
+```
+./scripts/create-github-release-package.sh linux tgz
+
+```
+
+#### MacOS
+
+```
+./scripts/create-github-release-package.sh macos tgz
+
+```
+
+#### Windows
+
+```
+./scripts/create-github-release-package.sh windows zip
+
+```
