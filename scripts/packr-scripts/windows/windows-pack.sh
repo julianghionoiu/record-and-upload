@@ -4,15 +4,18 @@ set -e
 set -u
 set -o pipefail
 
-source ../common-env-variables.sh
+SCRIPT_DIR=$(realpath $(dirname $0))
+PARENT_DIR=$(realpath ${SCRIPT_DIR}/..)
+source ${PARENT_DIR}/common-env-variables.sh
 
-JRE_ZIP_FILE_NAME=$(ls jdk*.zip) #jdk1.8.0_111.zip
-RELEASE_VERSION=$(git describe --abbrev=0 --tags)
+cd ${SCRIPT_DIR}
+JRE_ZIP_FILE_NAME=$(ls jre*.zip) #jdk1.8.0_111.zip
+RELEASE_VERSION=$(git describe --abbrev=0 --tags | tr -d v)
 OS_NAME=windows
 RECORD_AND_UPLOAD_JAR=${PACKAGE_NAME}-${OS_NAME}-${RELEASE_VERSION}.jar
-ZIP_ARCHIVE_NAME=$(getArchiveName "-${OS_NAME}-${RELEASE_VERSION}" "zip")
+ZIP_ARCHIVE_NAME=$(getArchiveName "${OS_NAME}-${RELEASE_VERSION}" "zip")
 
-if [[ -z ${JRE_ZIP_FILE_NAME} ]]; then
+if [[ ! -s ${JRE_ZIP_FILE_NAME} ]]; then
    echo "JRE for Windows was not found, please place one of them in the current directory and try running the script again."
    echo "Process halted."
    exit -1
@@ -56,3 +59,5 @@ time zip -d ${PACKR_TARGET_FOLDER}/${RECORD_AND_UPLOAD_JAR} ${HUMBLE_WINDOWS_LIB
 
 echo "*** Compressing '${PACKR_TARGET_FOLDER}' into '${ZIP_ARCHIVE_NAME}' ***"
 time zip -r ${ZIP_ARCHIVE_NAME} ${PACKR_TARGET_FOLDER}
+
+cd -

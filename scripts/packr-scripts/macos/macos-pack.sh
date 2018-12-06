@@ -4,15 +4,18 @@ set -e
 set -u
 set -o pipefail
 
-source ../common-env-variables.sh
+SCRIPT_DIR=$(realpath $(dirname $0))
+PARENT_DIR=$(realpath ${SCRIPT_DIR}/..)
+source ${PARENT_DIR}/common-env-variables.sh
 
+cd ${SCRIPT_DIR}
 JRE_ZIP_FILE_NAME=$(ls jre*.zip) #jre1.8.0_101-osx.zip
-RELEASE_VERSION=$(git describe --abbrev=0 --tags)
+RELEASE_VERSION=$(git describe --abbrev=0 --tags | tr -d v)
 OS_NAME=macos
 RECORD_AND_UPLOAD_JAR=${PACKAGE_NAME}-${OS_NAME}-${RELEASE_VERSION}.jar
-TGZ_ARCHIVE_NAME=$(getArchiveName "-${OS_NAME}-${RELEASE_VERSION}" "tgz")
+TGZ_ARCHIVE_NAME=$(getArchiveName "${OS_NAME}-${RELEASE_VERSION}" "tgz")
 
-if [[ -z ${JRE_ZIP_FILE_NAME} ]]; then
+if [[ ! -s ${JRE_ZIP_FILE_NAME} ]]; then
    echo "JRE for MacOS was not found, please place one of them in the current directory and try running the script again."
    echo "Process halted."
    exit -1
@@ -58,3 +61,5 @@ echo "*** Removing ${HUMBLE_MACOS_LIB} from ${RECORD_AND_UPLOAD_JAR} in '${PACKR
 time zip -d ${PACKR_TARGET_FOLDER}/Contents/Resources/${RECORD_AND_UPLOAD_JAR} ${HUMBLE_MACOS_LIB}
 
 time tar -czvf ${TGZ_ARCHIVE_NAME} ${PACKR_TARGET_FOLDER}
+
+cd -
