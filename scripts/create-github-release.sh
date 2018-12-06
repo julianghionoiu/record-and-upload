@@ -54,10 +54,6 @@ upload_os_specific_jar() {
 
 RELEASE_ARCHIVE_EXT=${2:-zip}
 upload_os_specific_package() {
-  source ./scripts/packr-scripts/common-env-variables.sh
-  cp ${PACKAGE_NAME} scripts/packr-scripts/${OS_NAME}
-  ./scripts/packr-scripts/${OS_NAME}/${OS_NAME}-pack.sh
-
   ## Pushing the OS-specific version of the record-and-upload archive file to github releases
   PACKAGE_NAME="record-and-upload-${RELEASE_VERSION}-${OS_NAME}.${RELEASE_ARCHIVE_EXT}"
   RELEASE_ARCHIVE="./packr-scripts/${OS_NAME}/${PACKAGE_NAME}"
