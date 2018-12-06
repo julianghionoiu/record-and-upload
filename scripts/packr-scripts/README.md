@@ -27,3 +27,26 @@ The goal of this folder is to house scripts and artifacts that concern building 
   - zip
   - tar
   - [Packr](https://github.com/libgdx/packr) jar - must be present in the current folder [project folder]/scripts/packr-scripts
+
+### How to create OS-specific JRE or JDK archives
+
+This is again an OS independent task, download any JDK 8 or JRE 8 from a Java vendor, preferrably as a compressed archive file. Otherwise the binary installer will need to be installed on the OS dependent target.
+
+#### Compressed archive
+Place this compressed archive in the scripts/packr-scripts/[OS] folder of the respective operating system.
+
+#### Binary installer
+Run the installer on the target OS where it is meant to be run, locate the target folder where it has been installed. Usually it these types of folders we are looking for:
+
+**Linux**
+/usr/lib/jvm/[jdk/jre folder]
+
+**MacOS**
+/Library/Java/JavaVirtualMachines/[jdk/jre folder]
+
+**Windows**
+C:\Program Files\Java\[jdk/jre folder]
+
+Do in the target folder for the respective OS, and zip the [jdk/jre folder] folder as a .zip file. Packr does not understand any other format irrespective of the target OS. Ensure the name of the archive is of the following format jre[...].zip. The script looking for it will look for such files, any other name means it won't be able to find the JDK and the process will terminate.
+
+Once done, place this compressed archive in the `scripts/packr-scripts/[OS]` folder of the respective operating system.
