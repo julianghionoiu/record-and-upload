@@ -40,7 +40,7 @@ RELEASE_ID=`cat ${CURL_OUTPUT} | grep id | head -n 1 | tr -d " " | tr "," ":" | 
 
 ## TODO: should we ever upload a vanilla uber jar without its OS dependency in it?
 OS_NAME=${1:-linux}
-os_specific_jar() {
+upload_os_specific_jar() {
   PACKAGE_NAME="record-and-upload-${RELEASE_VERSION}-${OS_NAME}.jar"
   RELEASE_JAR="./build/libs/${PACKAGE_NAME}"
   echo "Uploading asset to ReleaseId ${RELEASE_ID}, name=$PACKAGE_NAME"
@@ -52,22 +52,23 @@ os_specific_jar() {
        "https://uploads.github.com/repos/julianghionoiu/record-and-upload/releases/${RELEASE_ID}/assets?name=${PACKAGE_NAME}"
 }
 
-os_specific_package() {
+RELEASE_ARCHIVE_EXT=${2:-zip}
+upload_os_specific_package() {
   source ./scripts/packr-scripts/common-env-variables.sh
   cp ${PACKAGE_NAME} scripts/packr-scripts/${OS_NAME}
   ./scripts/packr-scripts/${OS_NAME}/${OS_NAME}-pack.sh
 
   ## Pushing the OS-specific version of the record-and-upload archive file to github releases
-  PACKAGE_NAME="record-and-upload-${RELEASE_VERSION}-${OS_NAME}.zip"
-  RELEASE_ZIP="./packr-scripts/${OS_NAME}/${PACKAGE_NAME}"
+  PACKAGE_NAME="record-and-upload-${RELEASE_VERSION}-${OS_NAME}.${RELEASE_ARCHIVE_EXT}"
+  RELEASE_ARCHIVE="./packr-scripts/${OS_NAME}/${PACKAGE_NAME}"
   echo "Uploading asset to ReleaseId ${RELEASE_ID}, name=$PACKAGE_NAME"
   curl \
       -H "Authorization: token ${GITHUB_TOKEN}" \
-      -H "Content-Type: application/zip" \
+      -H "Content-Type: application/${RELEASE_ARCHIVE_EXT}" \
       -H "Accept: application/vnd.github.v3+json" \
-      --data-binary @${RELEASE_ZIP} \
+      --data-binary @${RELEASE_ARCHIVE} \
        "https://uploads.github.com/repos/julianghionoiu/record-and-upload/releases/${RELEASE_ID}/assets?name=${PACKAGE_NAME}"  
 }
 
-os_specific_jar
-os_specific_package
+upload_os_specific_jar
+upload_os_specific_package
