@@ -8,7 +8,7 @@ OS_NAME=${1:-linux}
 RELEASE_ARCHIVE_EXT=${2:-zip}
 
 RELEASE_VERSION=`cat version.txt`
-PACKAGE_NAME="record-and-upload-${RELEASE_VERSION}-${OS_NAME}.${RELEASE_ARCHIVE_EXT}"
+PACKAGE_NAME="record-and-upload-${OS_NAME}-${RELEASE_VERSION}.${RELEASE_ARCHIVE_EXT}"
 
 echo "*** Building a package with ${PACKAGE_NAME} for ${OS_NAME} ***"
 source ./scripts/packr-scripts/common-env-variables.sh

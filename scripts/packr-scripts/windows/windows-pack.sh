@@ -7,6 +7,10 @@ set -o pipefail
 source ../common-env-variables.sh
 
 JRE_ZIP_FILE_NAME=$(ls jdk*.zip) #jdk1.8.0_111.zip
+RELEASE_VERSION=$(git describe --abbrev=0 --tags)
+OS_NAME=windows
+RECORD_AND_UPLOAD_JAR=${PACKAGE_NAME}-${OS_NAME}-${RELEASE_VERSION}.jar
+ZIP_ARCHIVE_NAME=$(getArchiveName "-${OS_NAME}-${RELEASE_VERSION}" "zip")
 
 if [[ -z ${JRE_ZIP_FILE_NAME} ]]; then
    echo "JRE for Windows was not found, please place one of them in the current directory and try running the script again."
@@ -17,10 +21,6 @@ fi
 # This would be a wget command that downloads the jar from the record-and-upload git repo
 # after the release process has push the artifact to github
 # the artifact will contain the OS specific humble video and the uber jar for record-and-upload
-RELEASE_VERSION=$(git describe --abbrev=0 --tags)
-RECORD_AND_UPLOAD_JAR=${PACKAGE_NAME}-${RELEASE_VERSION}.jar
-ZIP_ARCHIVE_NAME=$(getArchiveName "${RELEASE_VERSION}-windows" "zip")
-
 if [[ ! -s ${RECORD_AND_UPLOAD_JAR} ]]; then
    echo "Jar file ${RECORD_AND_UPLOAD_JAR} not found"
    echo "Downloading ${RECORD_AND_UPLOAD_JAR} from github"

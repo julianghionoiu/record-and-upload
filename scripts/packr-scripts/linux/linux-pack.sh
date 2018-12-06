@@ -7,6 +7,10 @@ set -o pipefail
 source ../common-env-variables.sh
 
 JRE_ZIP_FILE_NAME=$(ls jre*.zip) #jre1.8.0_152.zip
+RELEASE_VERSION=$(git describe --abbrev=0 --tags)
+OS_NAME=linux
+RECORD_AND_UPLOAD_JAR=${PACKAGE_NAME}-${OS_NAME}-${RELEASE_VERSION}.jar
+TGZ_ARCHIVE_NAME=$(getArchiveName "-${OS_NAME}-${RELEASE_VERSION}" "tgz")
 
 if [[ ! -s ${JRE_ZIP_FILE_NAME} ]]; then
    echo "JRE for Linux was not found, please place one of them in the current directory and try running the script again."
@@ -17,10 +21,6 @@ fi
 # This would be a wget command that downloads the jar from the record-and-upload git repo
 # after the release process has push the artifact to github
 # the artifact will contain the OS specific humble video and the uber jar for record-and-upload
-RELEASE_VERSION=$(git describe --abbrev=0 --tags)
-RECORD_AND_UPLOAD_JAR=${PACKAGE_NAME}-${RELEASE_VERSION}.jar
-TGZ_ARCHIVE_NAME=$(getArchiveName "${RELEASE_VERSION}-linux" "tgz")
-
 if [[ ! -s ${RECORD_AND_UPLOAD_JAR} ]]; then
    echo "Jar file ${RECORD_AND_UPLOAD_JAR} not found"
    echo "Downloading ${RECORD_AND_UPLOAD_JAR} from github"
@@ -28,14 +28,14 @@ if [[ ! -s ${RECORD_AND_UPLOAD_JAR} ]]; then
 fi
 
 echo 
-echo "*** Removing the old image folders: ${PACKR_TARGET_FOLDER} ***"
+echo "*** Removing the old image folder: ${PACKR_TARGET_FOLDER} ***"
 rm -fr ${PACKR_TARGET_FOLDER} || true
 
 echo
 echo "*** Removing the old ${TGZ_ARCHIVE_NAME} archive ***"
 rm -fr ${TGZ_ARCHIVE_NAME} || true
 
-echo 
+echo
 echo "*** Building '${PACKAGE_NAME}' image using packr ***"
 time java -jar ../packr.jar \
      --platform linux64 \
@@ -50,6 +50,9 @@ HUMBLE_LINUX_LIB=libhumblevideo.so
 echo "*** Uncompressing  ${HUMBLE_LINUX_LIB} from ${RECORD_AND_UPLOAD_JAR} into '${PACKR_TARGET_FOLDER}' ***"
 time unzip -o ${PACKR_TARGET_FOLDER}/${RECORD_AND_UPLOAD_JAR} ${HUMBLE_LINUX_LIB}
 mv ${HUMBLE_LINUX_LIB} ${PACKR_TARGET_FOLDER}
+
+echo "*** Making the commands in the bin directory of the JRE executable ***"
+chmod +x ${PACKR_TARGET_FOLDER}/jre/bin/*
 
 echo "*** Removing ${HUMBLE_LINUX_LIB} from ${RECORD_AND_UPLOAD_JAR} in '${PACKR_TARGET_FOLDER}' ***"
 time zip -d ${PACKR_TARGET_FOLDER}/${RECORD_AND_UPLOAD_JAR} ${HUMBLE_LINUX_LIB}

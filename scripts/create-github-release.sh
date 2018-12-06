@@ -41,7 +41,7 @@ RELEASE_ID=`cat ${CURL_OUTPUT} | grep id | head -n 1 | tr -d " " | tr "," ":" | 
 ## TODO: should we ever upload a vanilla uber jar without its OS dependency in it?
 OS_NAME=${1:-linux}
 upload_os_specific_jar() {
-  PACKAGE_NAME="record-and-upload-${RELEASE_VERSION}-${OS_NAME}.jar"
+  PACKAGE_NAME="record-and-upload-${OS_NAME}-${RELEASE_VERSION}.jar"
   RELEASE_JAR="./build/libs/${PACKAGE_NAME}"
   echo "Uploading asset to ReleaseId ${RELEASE_ID}, name=$PACKAGE_NAME"
   curl \
@@ -55,7 +55,7 @@ upload_os_specific_jar() {
 RELEASE_ARCHIVE_EXT=${2:-zip}
 upload_os_specific_package() {
   ## Pushing the OS-specific version of the record-and-upload archive file to github releases
-  PACKAGE_NAME="record-and-upload-${RELEASE_VERSION}-${OS_NAME}.${RELEASE_ARCHIVE_EXT}"
+  PACKAGE_NAME="record-and-upload-${OS_NAME}-${RELEASE_VERSION}.${RELEASE_ARCHIVE_EXT}"
   RELEASE_ARCHIVE="./packr-scripts/${OS_NAME}/${PACKAGE_NAME}"
   echo "Uploading asset to ReleaseId ${RELEASE_ID}, name=$PACKAGE_NAME"
   curl \
