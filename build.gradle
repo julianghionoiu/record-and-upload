@@ -111,18 +111,21 @@ dependencies {
         println 'Linux version of the humble video version '+humbleVideoVersion+' will be bundled with the jar'
         compile 'io.humble:humble-video-arch-x86_64-pc-linux-gnu6:'+humbleVideoVersion
         compile 'io.humble:humble-video-arch-i686-pc-linux-gnu6:'+humbleVideoVersion
+        archivesBaseName = archivesBaseName + "-linux"
     }
 
     if (project.hasProperty("macos")) {
         println 'MacOS version of the humble video version '+humbleVideoVersion+' will be bundled with the jar'
         compile 'io.humble:humble-video-arch-x86_64-apple-darwin12:'+humbleVideoVersion
         compile 'io.humble:humble-video-arch-i686-apple-darwin12:'+humbleVideoVersion
+        archivesBaseName = archivesBaseName + "-macos"
     }
 
     if (project.hasProperty("windows")) {
         println 'Windows version of the humble video version '+humbleVideoVersion+' will be bundled with the jar'
         compile 'io.humble:humble-video-arch-x86_64-w64-mingw32:'+humbleVideoVersion
         compile 'io.humble:humble-video-arch-i686-w64-mingw32:'+humbleVideoVersion
+        archivesBaseName = archivesBaseName + "-windows"
     }
 
     // Uncomment if you run from IDE
