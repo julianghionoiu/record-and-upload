@@ -40,29 +40,34 @@ RELEASE_ID=`cat ${CURL_OUTPUT} | grep id | head -n 1 | tr -d " " | tr "," ":" | 
 
 ## TODO: should we ever upload a vanilla uber jar without its OS dependency in it?
 OS_NAME=${1:-linux}
-PACKAGE_NAME="record-and-upload-${RELEASE_VERSION}-${OS_NAME}.jar"
-RELEASE_JAR="./build/libs/${PACKAGE_NAME}"
-echo "Uploading asset to ReleaseId ${RELEASE_ID}, name=$PACKAGE_NAME"
-curl \
-    -H "Authorization: token ${GITHUB_TOKEN}" \
-    -H "Content-Type: application/zip" \
-    -H "Accept: application/vnd.github.v3+json" \
-    --data-binary @${RELEASE_JAR} \
-     "https://uploads.github.com/repos/julianghionoiu/record-and-upload/releases/${RELEASE_ID}/assets?name=${PACKAGE_NAME}"
+os_specific_jar() {
+  PACKAGE_NAME="record-and-upload-${RELEASE_VERSION}-${OS_NAME}.jar"
+  RELEASE_JAR="./build/libs/${PACKAGE_NAME}"
+  echo "Uploading asset to ReleaseId ${RELEASE_ID}, name=$PACKAGE_NAME"
+  curl \
+      -H "Authorization: token ${GITHUB_TOKEN}" \
+      -H "Content-Type: application/zip" \
+      -H "Accept: application/vnd.github.v3+json" \
+      --data-binary @${RELEASE_JAR} \
+       "https://uploads.github.com/repos/julianghionoiu/record-and-upload/releases/${RELEASE_ID}/assets?name=${PACKAGE_NAME}"
+}
 
-source ./scripts/packr-scripts/common-env-variables.sh
-if [[ "${OS_NAME}"=="linux" ]]; then
-   cp ${PACKAGE_NAME} scripts/packr-scripts/linux
-   ./scripts/packr-scripts/linux/linux-pack.sh
-fi
+os_specific_package() {
+  source ./scripts/packr-scripts/common-env-variables.sh
+  cp ${PACKAGE_NAME} scripts/packr-scripts/${OS_NAME}
+  ./scripts/packr-scripts/${OS_NAME}/${OS_NAME}-pack.sh
 
-## Pushing the Linux version of the record-and-upload zip file to github
-PACKAGE_NAME="record-and-upload-${RELEASE_VERSION}-${OS_NAME}.zip"
-RELEASE_ZIP="./packr-scripts/linux/${PACKAGE_NAME}"
-echo "Uploading asset to ReleaseId ${RELEASE_ID}, name=$PACKAGE_NAME"
-curl \
-    -H "Authorization: token ${GITHUB_TOKEN}" \
-    -H "Content-Type: application/zip" \
-    -H "Accept: application/vnd.github.v3+json" \
-    --data-binary @${RELEASE_ZIP} \
-     "https://uploads.github.com/repos/julianghionoiu/record-and-upload/releases/${RELEASE_ID}/assets?name=${PACKAGE_NAME}"
+  ## Pushing the OS-specific version of the record-and-upload archive file to github releases
+  PACKAGE_NAME="record-and-upload-${RELEASE_VERSION}-${OS_NAME}.zip"
+  RELEASE_ZIP="./packr-scripts/${OS_NAME}/${PACKAGE_NAME}"
+  echo "Uploading asset to ReleaseId ${RELEASE_ID}, name=$PACKAGE_NAME"
+  curl \
+      -H "Authorization: token ${GITHUB_TOKEN}" \
+      -H "Content-Type: application/zip" \
+      -H "Accept: application/vnd.github.v3+json" \
+      --data-binary @${RELEASE_ZIP} \
+       "https://uploads.github.com/repos/julianghionoiu/record-and-upload/releases/${RELEASE_ID}/assets?name=${PACKAGE_NAME}"  
+}
+
+os_specific_jar
+os_specific_package
