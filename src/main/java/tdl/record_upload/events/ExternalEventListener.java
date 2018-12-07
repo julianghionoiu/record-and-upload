@@ -1,5 +1,5 @@
 package tdl.record_upload.events;
 
 public interface ExternalEventListener {
-    void process(String eventPayload) throws Exception;
+    void onExternalEvent(String eventPayload) throws Exception;
 }

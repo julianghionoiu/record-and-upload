@@ -61,7 +61,7 @@ public class BackgroundRemoteSyncTask {
     }
 
     public void finalRun() {
-        log.info("Upload remaining parts and finalise video");
+        log.info("Upload remaining parts and finalise recording session");
         syncLock.lock();
         try {
             remoteSync.run();
