@@ -7,12 +7,14 @@ public class NoOpThread extends Thread implements MonitoredBackgroundTask {
     private boolean isRunning;
     private int tick;
     private NoOpMessageProvider noOpMessageProvider;
+    private String lastReceivedExternalEvent;
 
 
     public NoOpThread(NoOpMessageProvider noOpMessageProvider) {
         this.noOpMessageProvider = noOpMessageProvider;
         isRunning = true;
         tick = 0;
+        this.lastReceivedExternalEvent = "";
     }
 
 
@@ -40,7 +42,7 @@ public class NoOpThread extends Thread implements MonitoredBackgroundTask {
     @Override
     public void displayMetrics(StringBuilder displayBuffer) {
         tick += 1;
-        displayBuffer.append(noOpMessageProvider.messageFor(tick));
+        displayBuffer.append(noOpMessageProvider.messageFor(tick, lastReceivedExternalEvent));
     }
 
     @Override
@@ -50,6 +52,6 @@ public class NoOpThread extends Thread implements MonitoredBackgroundTask {
 
     @Override
     public void onExternalEvent(String eventPayload) {
-        // Do nothing
+        this.lastReceivedExternalEvent = eventPayload;
     }
 }

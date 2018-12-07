@@ -54,6 +54,11 @@ public class RecordAndUploadApp {
 
         @Parameter(names = "--no-sync", description = "Do not sync target folder")
         private boolean doNotSync = false;
+
+        //~~ Test only
+
+        @Parameter(names = "--soft-stop", description = "Attempt to stop without killing the JVM")
+        private boolean doSoftStop = false;
     }
 
 
@@ -130,6 +135,12 @@ public class RecordAndUploadApp {
             log.error("User does not have enough permissions to upload. Reason: {}", e.getMessage());
         } catch (Exception e) {
             log.error("Exception encountered. Stopping now.", e);
+        } finally {
+            boolean hardStop = !params.doSoftStop;
+            if (hardStop) {
+                // Forcefully stop. A problem with Jetty finalisation might prevent the JVM from stopping
+                Runtime.getRuntime().halt(0);
+            }
         }
     }
 
@@ -175,16 +186,14 @@ public class RecordAndUploadApp {
         externalEventServerThread.signalStop();
 
         // Finalise the upload and cancel tasks
-        stopFileLogging();
+        forceLoggingFileRotation(localStorageFolder);
         remoteSyncTask.finalRun();
         metricsReportingTask.cancel();
 
         // Join the event thread
         externalEventServerThread.join();
         log.info("~~~~~~ Stopped ~~~~~~");
-
-        // Forcefully stop. A problem with Jetty finalisation might prevent the JVM from stopping
-        Runtime.getRuntime().halt(0);
+        stopFileLogging();
     }
 
     private static void registerShutdownHook(List<Stoppable> servicesToStop) {
@@ -214,6 +223,10 @@ public class RecordAndUploadApp {
         LockableFileLoggingAppender.addToContext(loggerContext, localStorageFolder);
     }
 
+    private static void forceLoggingFileRotation(String localStorageFolder) {
+        stopFileLogging();
+        startFileLogging(localStorageFolder);
+    }
 
     private static void stopFileLogging() {
         LoggerContext loggerContext = (LoggerContext)LoggerFactory.getILoggerFactory();

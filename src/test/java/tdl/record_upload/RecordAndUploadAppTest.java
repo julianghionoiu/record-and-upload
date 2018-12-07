@@ -1,74 +1,112 @@
 package tdl.record_upload;
 
-import org.junit.Ignore;
+import com.mashape.unirest.http.Unirest;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.Objects;
+
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
 public class RecordAndUploadAppTest {
 
-    /**
-     * Start the app
-     *
-     * Check output, you should see:
-     *  - recording metrics for frames
-     *  - once every 3 minutes you see a snapshot being taken
-     *  - once every 5 minutes you should see a SyncTask uploading files
-     *
-     * Stop the recording (CTRL+C), you should see:
-     *  - a log message saying that the screen recording is stopping
-     *  - a log message saying that the source code recording is stopping
-     *  - upload messages for the video and the log file
-     *
-     * Download the sourceStream file, and use the cli tool to:
-     *  - list the snapshots
-     *  - convert the file to a git repo
-     */
-    @Ignore("Manual acceptance")
-    @Test
-    public void record_and_upload() throws Exception {
+    @Rule
+    public TemporaryFolder tempFolder = new TemporaryFolder();
+
+    @SuppressWarnings("SameParameterValue")
+    public class MainAppThread extends Thread {
+        static final String RECORDING_INTERFACE = "http://localhost:41375";
+        private String storageDirPath;
+
+        MainAppThread(String storageDirPath) {
+            super("Main");
+            this.storageDirPath = storageDirPath;
+        }
+
+        public void run() {
+            RecordAndUploadApp.main(new String[]{
+                    "--store", storageDirPath,
+                    "--no-video", "--no-sourcecode", "--no-sync",
+                    "--soft-stop"
+            });
+        }
+
+        String getStatus() throws Exception {
+            return Unirest.get(RECORDING_INTERFACE +"/status").asString().getBody();
+        }
+
+        void sendNotify(String payload) throws Exception {
+            Unirest.post(RECORDING_INTERFACE +"/notify").body(payload).asString();
+        }
+
+        void sendStop() throws Exception {
+            Unirest.post(RECORDING_INTERFACE +"/stop").asString();
+        }
     }
 
-
-    /**
-     *
-     * Use Minio as S3 alternative
-     * Prepare the localSource folder
-     *
-     * Start the app
-     *
-     * Check storage folder, you should see:
-     *  - a video file with timestamp plus a corresponding .lock file
-     *  - a sourceStream file with timestamp plus a corresponding .lock file
-     *  - a log file plus a corresponding .lock file
-     *
-     * Stop the recording (CTRL+C)
-     *
-     * Check storage folder, you should see:
-     *  - no .lock file
-     *
-     * Check AWS S3, you should see:
-     *  - a video file
-     *  - a sourceStream file
-     *  - a log file
-     *
-     * Compare local video with remote video:
-     *  - compute the md5sum of local video
-     *  - download remote video and compute md5sum
-     *  - md5 should match
-     *
-     * Visually inspect the remote video, check if:
-     *  - the video quality is ok
-     *  - the playback speed is 4x
-     *
-     * Download the sourceStream file, and use the cli tool to:
-     *  - list the snapshots
-     *  - convert the file to a git repo
-     *
-     * Check the logs:
-     *  - you should see Starting messages, Metrics, Upload
-     */
-
-    @Ignore("TODO write the test")
     @Test
-    public void record_and_upload_X() throws Exception {
+    public void orchestratesMultipleThreads() throws Exception {
+        // Prepare output folder
+        String storagePath = tempFolder.getRoot().getPath();
+        System.out.println("Writing logs to "+storagePath);
+
+        // Start the recording process
+        MainAppThread appThread = new MainAppThread(storagePath);
+        appThread.start();
+
+        int secondsToInitialize = 5;
+        System.out.printf("Wait %d seconds for the threads to start%n", secondsToInitialize);
+        Thread.sleep(secondsToMillis(secondsToInitialize));
+
+        // Check if server is running
+        assertThat(appThread.getStatus(), is("OK\n"));
+
+        // Send some notifications
+        appThread.sendNotify("TheExternalTag");
+
+        int secondsToRun = 5;
+        System.out.printf("Wait %d seconds before sending the kill signal%n", secondsToRun);
+        Thread.sleep(secondsToMillis(secondsToRun));
+
+        System.out.println("Stopping the test by sending the stop command");
+        appThread.sendStop();
+        appThread.join();
+
+        // Assert on the generated log
+        File[] logFiles = tempFolder.getRoot().listFiles((dir, name) -> name.endsWith(".log"));
+        assertThat("Logs are generated and rotated before final upload",
+                Objects.requireNonNull(logFiles).length, is(2));
+
+        String logContents = readFile(logFiles[0]) + readFile(logFiles[1]);
+        assertThat("starts the Main thread", logContents, containsString("[Main]"));
+        assertThat("starts the Upload thread", logContents, containsString("[Upload]"));
+        assertThat("starts the Metrics thread", logContents, containsString("[Metrics]"));
+
+        assertThat("syncs with remote", logContents, containsString("Sync local files with remote"));
+        assertThat("captures video frame 1", logContents, containsString("tick   1, video recoding"));
+        assertThat("captures video frame 2", logContents, containsString("tick   2, video recoding"));
+        assertThat("captures source code 1", logContents, containsString("frame no.  1, source code"));
+        assertThat("captures source code 2", logContents, containsString("frame no.  2, source code"));
+
+        assertThat("receives external notify payload", logContents, containsString("TheExternalTag"));
+
+        assertThat("uploads remaining parts on shutdown", logContents,
+                containsString("Upload remaining parts and finalise recording session"));
+    }
+
+    private String readFile(File logFile) throws IOException {
+        return new String(Files.readAllBytes(logFile.toPath()));
+    }
+
+    //~~~ Helpers
+
+    private static int secondsToMillis(int secondsToInitialize) {
+        return secondsToInitialize * 1000;
     }
 }
