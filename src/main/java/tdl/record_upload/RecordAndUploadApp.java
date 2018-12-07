@@ -74,13 +74,13 @@ public class RecordAndUploadApp {
             removeOldLocks(params.localStorageFolder);
             startFileLogging(params.localStorageFolder);
 
-            // Prepare remote destination
-            AWSSecretProperties awsSecretProperties = AWSSecretProperties
-                    .fromPlainTextFile(Paths.get(params.configFile));
 
+            // Prepare remote destination
             boolean syncFolder = !params.doNotSync;
             Destination uploadDestination;
             if (syncFolder) {
+                AWSSecretProperties awsSecretProperties = AWSSecretProperties
+                        .fromPlainTextFile(Paths.get(params.configFile));
                 uploadDestination = S3BucketDestination.builder()
                         .awsClient(awsSecretProperties.createClient())
                         .bucket(awsSecretProperties.getS3Bucket())
