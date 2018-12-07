@@ -17,7 +17,6 @@ public class NoOpThread extends Thread implements MonitoredBackgroundTask {
         this.lastReceivedExternalEvent = "";
     }
 
-
     @Override
     public void run() {
         while(isRunning) {

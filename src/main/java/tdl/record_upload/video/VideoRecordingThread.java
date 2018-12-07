@@ -8,7 +8,6 @@ import tdl.record.screen.metrics.VideoRecordingMetricsCollector;
 import tdl.record.screen.utils.ImageQualityHint;
 import tdl.record.screen.video.VideoRecorder;
 import tdl.record_upload.MonitoredBackgroundTask;
-import tdl.record_upload.Stoppable;
 
 import java.io.File;
 import java.time.Duration;

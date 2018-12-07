@@ -5,6 +5,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
+import tdl.record.screen.video.VideoRecorder;
 import tdl.record_upload.events.ExternalEventServerThread;
 import tdl.record_upload.logging.LockableFileLoggingAppender;
 import tdl.record_upload.sourcecode.NoOpSourceCodeThread;
@@ -46,6 +47,8 @@ public class RecordAndUploadApp {
         @Parameter(names = {"--sourcecode"}, description = "The folder that contains the source code that needs to be tracked")
         private String localSourceCodeFolder = ".";
 
+        //~~ Graceful degradation flags
+
         @Parameter(names = "--no-video", description = "Disable video recording")
         private boolean doNotRecordVideo = false;
 
@@ -55,7 +58,10 @@ public class RecordAndUploadApp {
         @Parameter(names = "--no-sync", description = "Do not sync target folder")
         private boolean doNotSync = false;
 
-        //~~ Test only
+        //~~ Test helpers
+
+        @Parameter(names = "--run-self-test", description = "Run some basic checks then stop")
+        private boolean runSelfTest = false;
 
         @Parameter(names = "--soft-stop", description = "Attempt to stop without killing the JVM")
         private boolean doSoftStop = false;
@@ -67,6 +73,13 @@ public class RecordAndUploadApp {
         Params params = new Params();
         JCommander jCommander = new JCommander(params);
         jCommander.parse(args);
+
+        if (params.runSelfTest) {
+            //TODO add a connectivity check to AWS
+            VideoRecorder.runSanityCheck();
+            //TODO add a check for JGit
+            return;
+        }
 
         try {
             // Prepare source folder
