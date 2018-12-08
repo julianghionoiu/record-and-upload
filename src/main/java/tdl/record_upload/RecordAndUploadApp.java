@@ -75,9 +75,9 @@ public class RecordAndUploadApp {
         jCommander.parse(args);
 
         if (params.runSelfTest) {
-            //TODO add a connectivity check to AWS
+            S3BucketDestination.runSanityCheck();
             VideoRecorder.runSanityCheck();
-            //TODO add a check for JGit
+            //SourceCodeRecorder.runSanityCheck();
             return;
         }
 
