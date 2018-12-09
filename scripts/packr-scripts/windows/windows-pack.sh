@@ -15,11 +15,8 @@ OS_NAME=windows
 RECORD_AND_UPLOAD_JAR=${PACKAGE_NAME}-${OS_NAME}-${RELEASE_VERSION}.jar
 ZIP_ARCHIVE_NAME=$(getArchiveName "${OS_NAME}-${RELEASE_VERSION}" "zip")
 
-if [[ ! -s ${JRE_ZIP_FILE_NAME} ]]; then
-   echo "JRE for Windows was not found, please place one of them in the current directory and try running the script again."
-   echo "Process halted."
-   exit -1
-fi
+# JRE_ZIP_ARCHIVE_WINDOWS_URL is an environment variable
+download_os_specific_jre_archive ${JRE_ZIP_FILE_NAME} ${JRE_ZIP_ARCHIVE_WINDOWS_URL}
 
 # This would be a wget command that downloads the jar from the record-and-upload git repo
 # after the release process has push the artifact to github

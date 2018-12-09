@@ -28,3 +28,19 @@ getArchiveName(){
 
 ZIP_ARCHIVE_NAME=$(getArchiveName zip)
 TGZ_ARCHIVE_NAME=$(getArchiveName tgz)
+
+download_os_specific_jre_archive() {
+	JRE_ZIP_FILE_NAME=${1}
+	JRE_ARCHIVE_URL=${2}
+	if [[ ! -s ${JRE_ZIP_FILE_NAME} ]]; then
+	   echo "Downloading JRE for ${OS_NAME} from ${JRE_ARCHIVE_URL}"
+	   wget ${JRE_ARCHIVE_URL}
+	fi
+
+	if [[ ! -s ${JRE_ZIP_FILE_NAME} ]]; then
+	   echo "JRE for ${OS_NAME} was not found, please place one of them in the current directory and try running the script again."
+	   echo "It is possible ${JRE_ARCHIVE_URL} does not contain the expected archive needed for the rest of the process"
+	   echo "Process halted."
+	   exit -1
+	fi
+}
