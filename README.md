@@ -149,3 +149,40 @@ Ensure the OS-specific packages have been built and available in the respective 
 ./scripts/create-github-release-package.sh windows zip
 
 ```
+
+### End-to-end build cyle
+
+The respective scripts to do various parts of the build are provided in the project. The idea is to be able to build the jar and the package artifacts for the various OSes, by hand (manual execution of scripts) and automatically (calling scripts in CI/CD pipelines).
+
+Below is an end-to-end flow of the steps before a jar or package is produced and placed into the GitHub repo:
+
+- Step 0: Create the respective JRE 8 archives (one off task or whenever an update is needed)
+	- Updates to JRE 8 archives will result in the recreation of packages (Step 4 onwards)
+- Step 1: Code or script changes pushed to the repo (merged into master)
+- Step 2: Build the JARs for the respective OS
+	- run `./gradlew clean shadowJar -P[OS name]  -i`
+- Step 3: Push the JARs to GitHub Releases [optional]
+	- [we need a script for it or adapt the existing one to do dual tasks]
+- Step 4: Build the Packages for the respective OS
+	- run `./create-os-specific-package.sh [OS name] [archive extension]`
+- Step 5: Push the Packages to GitHub Releases
+	- run `./create-github-release-package.sh [OS name] [archive extension]`
+
+Known OS names (all in lowercase):
+
+- linux
+- macos
+- windows
+
+Known archive extensions (all in lowercase):
+
+- tgz (for Linux and MacOS)
+- zip (for Windows)
+
+
+Old way of building and pushing the capsule jar to the GitHub releases:
+
+ - Building maven capsules, see section [Development](#Development) above
+ - `./create-github-release.sh` call to the script
+
+Ideally minimal docs or instructions should be required, scripts should do the job and replace any needed checks and balances. As much as possible amend scripts and update docs where needed.
