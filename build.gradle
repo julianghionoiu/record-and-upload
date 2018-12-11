@@ -46,7 +46,7 @@ ext {
 }
 
 dependencies {
-    compile ('ro.ghionoiu:dev-sourcecode-record:0.0.17') {
+    compile ('ro.ghionoiu:dev-sourcecode-record:0.0.19') {
         exclude group: 'com.beust', module: 'jcommander'
         exclude group: 'org.apache.httpcomponents'
     }

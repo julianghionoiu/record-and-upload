@@ -6,6 +6,7 @@ import com.beust.jcommander.Parameter;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import tdl.record.screen.video.VideoRecorder;
+import tdl.record.sourcecode.record.SourceCodeRecorder;
 import tdl.record_upload.events.ExternalEventServerThread;
 import tdl.record_upload.logging.LockableFileLoggingAppender;
 import tdl.record_upload.sourcecode.NoOpSourceCodeThread;
@@ -77,7 +78,8 @@ public class RecordAndUploadApp {
         if (params.runSelfTest) {
             S3BucketDestination.runSanityCheck();
             VideoRecorder.runSanityCheck();
-            //SourceCodeRecorder.runSanityCheck();
+            SourceCodeRecorder.runSanityCheck();
+            log.info("~~~~~~ Self test completed successfully ~~~~~~");
             return;
         }
 
