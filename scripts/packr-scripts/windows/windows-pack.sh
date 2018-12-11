@@ -4,6 +4,12 @@ set -e
 set -u
 set -o pipefail
 
+if [[ "${OSTYPE}" != *"linux"* ]]; then
+  realpath() {
+      [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+  }
+fi
+
 SCRIPT_DIR=$(realpath $(dirname $0))
 PARENT_DIR=$(realpath ${SCRIPT_DIR}/..)
 source ${PARENT_DIR}/common-env-variables.sh

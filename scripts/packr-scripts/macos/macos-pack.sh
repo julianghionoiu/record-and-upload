@@ -4,6 +4,12 @@ set -e
 set -u
 set -o pipefail
 
+if [[ "${OSTYPE}" != *"linux"* ]]; then
+  realpath() {
+      [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+  }
+fi
+
 SCRIPT_DIR=$(realpath $(dirname $0))
 PARENT_DIR=$(realpath ${SCRIPT_DIR}/..)
 source ${PARENT_DIR}/common-env-variables.sh
@@ -50,6 +56,7 @@ HUMBLE_MACOS_LIB=libhumblevideo.dylib
 echo "*** Uncompressing  ${HUMBLE_MACOS_LIB} from ${RECORD_AND_UPLOAD_JAR} into '${PACKR_TARGET_FOLDER}' ***"
 time unzip -o ${PACKR_TARGET_FOLDER}/Contents/Resources/${RECORD_AND_UPLOAD_JAR} ${HUMBLE_MACOS_LIB}
 mv ${HUMBLE_MACOS_LIB} ${PACKR_TARGET_FOLDER}/Contents/Resources/
+mv ${PACKR_TARGET_FOLDER}/Contents/MacOS/record-and-upload ${PACKR_TARGET_FOLDER}/Contents/Resources/record-and-upload
 
 echo "*** Making the commands in the bin directory of the JRE executable ***"
 chmod +x ${PACKR_TARGET_FOLDER}/Contents/Resources/jre/bin/*
