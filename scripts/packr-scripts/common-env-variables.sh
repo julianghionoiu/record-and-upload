@@ -1,6 +1,5 @@
 #!/bin/bash
 
-RECORD_AND_UPLOAD_JAR="../record-and-upload.jar"
 PACKAGE_NAME=record-and-upload
 EXE_NAME=record-and-upload
 PACKR_TARGET_FOLDER=record
