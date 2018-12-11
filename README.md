@@ -1,4 +1,4 @@
-
+# Record and Upload app
 
 Command-line tool that records the screen as Fragmented MP4 and upload the fragments as they are being generated.
 
@@ -127,7 +127,7 @@ Ensure the OS-specific jars have been built and available in the `build/libs/` f
 
 ### To release OS specific packages (contain OS specific jars)
 
-Ensure the OS-specific packages have been built and available in the respective OS folders under `scripts/packr-scripts/`
+Ensure the OS-specific packages have been built and available in the respective OS folders under `scripts/packr-scripts/`. README file provided in the folder for further details.
 
 #### Linux
 
