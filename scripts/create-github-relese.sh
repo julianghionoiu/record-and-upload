@@ -37,14 +37,21 @@ curl \
     tee ./build/github-release.listing
 RELEASE_ID=`cat ${CURL_OUTPUT} | grep id | head -n 1 | tr -d " " | tr "," ":" | cut -d ":" -f 2`
 
+function uploadAsset() {
+    local releaseId=$1
+    local assetName=$2
+    local releaseJar="./build/libs/${assetName}"
+    echo "Uploading asset to ReleaseId ${releaseId}, name=${assetName}"
+    curl \
+        -H "Authorization: token ${GITHUB_TOKEN}" \
+        -H "Content-Type: application/zip" \
+        -H "Accept: application/vnd.github.v3+json" \
+        --data-binary @${releaseJar} \
+         "https://uploads.github.com/repos/julianghionoiu/record-and-upload/releases/${releaseId}/assets?name=${assetName}"
 
-PACKAGE_NAME="record-and-upload-${RELEASE_VERSION}-capsule.jar"
-RELEASE_JAR="./build/libs/${PACKAGE_NAME}"
-echo "Uploading asset to ReleaseId ${RELEASE_ID}, name=$PACKAGE_NAME"
-curl \
-    -H "Authorization: token ${GITHUB_TOKEN}" \
-    -H "Content-Type: application/zip" \
-    -H "Accept: application/vnd.github.v3+json" \
-    --data-binary @${RELEASE_JAR} \
-     "https://uploads.github.com/repos/julianghionoiu/record-and-upload/releases/${RELEASE_ID}/assets?name=${PACKAGE_NAME}"
+}
 
+uploadAsset ${RELEASE_ID} "record-and-upload-${RELEASE_VERSION}-capsule.jar"
+uploadAsset ${RELEASE_ID} "record-and-upload-macos-${RELEASE_VERSION}-all.jar"
+uploadAsset ${RELEASE_ID} "record-and-upload-linux-${RELEASE_VERSION}-all.jar"
+uploadAsset ${RELEASE_ID} "record-and-upload-windows-${RELEASE_VERSION}-all.jar"

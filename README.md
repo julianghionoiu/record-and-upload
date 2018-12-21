@@ -36,34 +36,58 @@ java --illegal-access=warn  --add-modules=java.xml.bind,java.activation -jar rec
 ```
 
 
-## Development
+## Development - building
 
-### Build and run as command-line app
+### Build as a thin maven-based Capsule
 
-This will grate a maven based Jar that will download the required dependencies before running the app:
-
-#### Running and building with pre-Java 9 versions
+This will create a maven based Jar that will download the required dependencies before running the app:
 
 ```bash
-./gradlew clean mavenCapsule
+./gradlew clean mavenCapsule --info
 rm -R ~/.capsule/deps/ro
+```
+
+### Build as a OS specific fat Jar
+
+This will crate a maven based Jar that will download the required dependencies before running the app:
+
+```bash
+./gradlew mavenCapsule --info
+```
+
+
+## Development - running
+
+#### Running with pre-Java 9 versions
+
+```bash
 java -jar ./build/libs/record-and-upload-`cat version.txt`-capsule.jar --config .private/aws-test-secrets --store ./build/play
 ```
 
-#### Running and building with Java 9
+#### Running with Java 9
 
 Ensure `JAVA_HOME` points to the Java 9 SDK home folder. Use `java -version` to check if the java launcher on the `PATH` is version 9.0 (aka 1.9) or higher.
 
 ```bash
-./gradlew clean mavenCapsule
-rm -R ~/.capsule/deps/ro
 java --illegal-access=warn  --add-modules=java.xml.bind,java.activation -jar ./build/libs/record-and-upload-`cat version.txt`-capsule.jar --config .private/aws-test-secrets --store ./build/play
 ```
 
-To generate test files you could run
+## Development - Testing
+
+### Unit tests
+
+Run the test suite with Gradle:
 ```bash
- mkdir -p build/play && dd if=/dev/random of=build/play/output_`date +%s`.mp4  bs=1m  count=16
+./gradlew clean test --info --console=plain
 ```
+
+### Packaging tests
+
+Run the self-test on the generated jar file:
+```bash
+java -jar build/libs/record-and-upload-linux-*-all.jar --run-self-test
+```
+
 
 ### To release
 
