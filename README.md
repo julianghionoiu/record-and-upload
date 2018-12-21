@@ -52,7 +52,9 @@ rm -R ~/.capsule/deps/ro
 This will crate a maven based Jar that will download the required dependencies before running the app:
 
 ```bash
-./gradlew mavenCapsule --info
+./gradlew shadowJar -i -PvideoArch=macos
+./gradlew shadowJar -i -PvideoArch=windows
+./gradlew shadowJar -i -PvideoArch=linux
 ```
 
 
