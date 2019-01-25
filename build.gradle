@@ -65,7 +65,7 @@ dependencies {
         exclude group: 'com.beust', module: 'jcommander'
         exclude group: 'org.apache.httpcomponents'
     }
-    compile ('ro.ghionoiu:dev-screen-record:0.0.8') {
+    compile ('ro.ghionoiu:dev-screen-record:0.0.9') {
         exclude group: 'com.beust', module: 'jcommander'
         exclude group: 'org.apache.httpcomponents'
     }

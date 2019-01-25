@@ -2,19 +2,6 @@
 
     <conversionRule conversionWord="color_by_level"
                     converterClass="tdl.record_upload.logging.ColorByLevelCompositeConverter" />
-    <!-- 
-        In Windows 10 (possibly future ones as well), using this feature along with logback or log4j can throw a harmless warning. 
-
-        See https://github.com/julianghionoiu/record-and-upload/issues/13 for more details.
-
-        But by passing -Dlogback.enableJansi=true from the command-line, the Jansi (console colouring) feature can be. 
-
-        For e.g.
-
-            java.exe -Dlogback.enableJansi="true" -jar [jarName] [other args...]
-
-        By default, Jansi is always DISABLED (due to property set to "false").
-    -->
     <property name="ENABLE_JANSI_FLAG" value="${logback.enableJansi:-false}" />
   
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">

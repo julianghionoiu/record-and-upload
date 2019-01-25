@@ -207,14 +207,14 @@ public class RecordAndUploadApp {
 
         // Join the event thread
         externalEventServerThread.join();
-        log.info("~~~~~~ Stopped ~~~~~~");
+        log.warn("~~~~~~ Stopped ~~~~~~");
         stopFileLogging();
     }
 
     private static void registerShutdownHook(List<Stoppable> servicesToStop) {
         final Thread mainThread = Thread.currentThread();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            log.warn("Shutdown signal received");
+            log.warn("Shutdown signal received - please wait for the upload to complete");
             try {
                 for (Stoppable stoppable : servicesToStop) {
                     stoppable.signalStop();
