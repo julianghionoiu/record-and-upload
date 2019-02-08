@@ -108,7 +108,7 @@ public class RecordAndUploadApp {
 
             // Validate destination
             log.info("Checking permissions");
-            uploadDestination.testUploadPermissions();
+            uploadDestination.startS3SyncSession();
 
             // Timestamp
             String timestamp = LocalDateTime.now().format(fileTimestampFormatter);

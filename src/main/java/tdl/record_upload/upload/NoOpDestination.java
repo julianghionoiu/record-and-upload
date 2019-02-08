@@ -11,7 +11,7 @@ import java.util.List;
 
 public class NoOpDestination implements Destination {
     @Override
-    public void testUploadPermissions() {
+    public void startS3SyncSession() {
         // All good
     }
 
