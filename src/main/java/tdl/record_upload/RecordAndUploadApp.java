@@ -107,8 +107,8 @@ public class RecordAndUploadApp {
 
 
             // Validate destination
-            log.info("Checking permissions");
-            uploadDestination.testUploadPermissions();
+            log.info("Start S3 Sync session");
+            uploadDestination.startS3SyncSession();
 
             // Timestamp
             String timestamp = LocalDateTime.now().format(fileTimestampFormatter);
@@ -146,6 +146,10 @@ public class RecordAndUploadApp {
                     videoRecordingTask,
                     sourceCodeRecordingTask
             );
+
+            // Stop the S3 Sync session from above
+            log.info("Stop S3 Sync session");
+            uploadDestination.stopS3SyncSession();
         } catch (DestinationOperationException e) {
             log.error("User does not have enough permissions to upload. Reason: {}", e.getMessage());
         } catch (Exception e) {
