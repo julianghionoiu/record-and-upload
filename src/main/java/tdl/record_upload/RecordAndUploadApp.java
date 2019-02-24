@@ -172,10 +172,11 @@ public class RecordAndUploadApp {
         log.info("Checking diskspace");
         int minimumRequiredDiskspaceHumanReadable = getMinimumRequiredDiskspace(); // in GB;
         int minimumRequiredDiskspace = minimumRequiredDiskspaceHumanReadable * ONE_GB;
-        String homeDirectory = System.getProperty("user.home");
-        long availableDiskspace = getAvailableDiskspaceFor(homeDirectory);
+        String userDirectory = System.getProperty("user.dir");
+        String userDriveOrVolume = Paths.get(userDirectory).getRoot().toString();
+        long availableDiskspace = getAvailableDiskspaceFor(userDriveOrVolume);
         long availableDiskspaceHumanReadable = availableDiskspace / ONE_GB;
-        log.info(String.format("Available disk space on the '%s' volume (or drive): %dGB", homeDirectory, availableDiskspaceHumanReadable));
+        log.info(String.format("Available disk space on the volume (or drive) '%s': %dGB", userDriveOrVolume, availableDiskspaceHumanReadable));
         if (availableDiskspace < minimumRequiredDiskspace) {
             log.error(String.format("Sorry, you need at least %dGB of free disk space on this volume (or drive), in order to run the screen recording app (in either modes: video-enabled or video-disabled).", minimumRequiredDiskspaceHumanReadable));
             log.warn("Please make free up some disk space on this volume (or drive) and try running the screen recording app again.");
