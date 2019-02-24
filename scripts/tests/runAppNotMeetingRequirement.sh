@@ -50,23 +50,25 @@ results=$( (java -jar ${PROJECT_ROOT_FOLDER}/build/libs/record-and-upload-${OSAR
 
 exitCode=$(cat ${exitCodeFile})
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo " Running test on record and upload app to check for the minimum disk space requirement check" 1>&2
+echo " Running test on record and upload app to verify the minimum disk space requirement check" 1>&2
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 
 if [[ ${exitCode} -eq 0 ]]; then
-  echo "Test should have failed due to non-zero exit code" 1>&2
-  echo "   Actual exit code: ${exitCode}"                  1>&2
-  echo "   Expected exit code: non-zero exit code"         1>&2
-
-  echo "Please check if the app is being run under the expected conditions"
-else
-  echo "   Actual exit code: ${exitCode}"                  1>&2
-  echo "   Expected exit code: non-zero exit code"         1>&2
-
-  echo ""
   if [[ $(echo ${results} | grep "Sorry, you need at least 1GB of free disk space on this volume (or drive)" ) ]]; then
   	echo "Test PASSED" 1>&2
-  else 
+  else
   	echo "	App failed due to other reasons than disk space requirements."
+
+  	echo "App execution logs:"
+  	echo ${results}
   fi
+else
+  echo "Test should NOT have failed due to non-zero exit code" 1>&2
+  echo "   Actual exit code: ${exitCode}"  1>&2
+  echo "   Expected exit code: 0"          1>&2
+
+  echo "Please check if the app is being run under the expected conditions"
+
+  echo "App execution logs:"
+  echo ${results}
 fi

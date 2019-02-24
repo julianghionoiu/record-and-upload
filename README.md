@@ -104,16 +104,6 @@ $ ./runDockerContainerWith4MBRAM.sh
 
 Note: The docker container script maps the current project directory into the container so the script works seamlessly.
 
-#### Run the app by simulating a low-disk space by setting the `RECORD_AND_UPLOAD_MINIMUM_DISKSPACE` to a very high number 
-
-```bash
-$ cd scripts/tests
-
-$ ./runAppNotMeetingRequirementViaEnvVarSetting.sh
-```
-
-Note: This script should run in any local environment (does not need a docker or VM environment).
-
 #### Run the app in a low-disk space environment (i.e. VM with < 1GB free disk space) 
 
 ```bash
