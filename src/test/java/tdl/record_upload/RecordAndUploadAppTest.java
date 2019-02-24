@@ -3,6 +3,7 @@ package tdl.record_upload;
 import com.mashape.unirest.http.Unirest;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
@@ -24,6 +25,9 @@ public class RecordAndUploadAppTest {
 
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
+
+    @Rule
+    public EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
     @SuppressWarnings("SameParameterValue")
     public class MainAppThread extends Thread {
@@ -123,6 +127,26 @@ public class RecordAndUploadAppTest {
         } catch (Exception ex) {
             fail("Should have NOT thrown an exception, if disk space requirements are met. Error message: " + ex.getMessage());
         } finally {
+            resetStdOut();
+        }
+    }
+
+    @Test
+    public void abortAppIfDiskSpaceRequirementFails() {
+        String stdoutputLogFilePath = "";
+        try {
+            environmentVariables.set("RECORD_AND_UPLOAD_MINIMUM_DISKSPACE", "100");
+            stdoutputLogFilePath = redirectStdOutToFile(tempFolder.getRoot().getPath());
+
+            runRecordAndUploadApp();
+
+            String logContents = readFile(new File(stdoutputLogFilePath));
+            assertThat("Did not perform the disk space requirement check", logContents, containsString("Available disk space on the"));
+            assertThat("Did not fail when the disk space requirement was not met", logContents, containsString("Start S3 Sync session"));
+        } catch (Exception ex) {
+            fail("Should have NOT thrown an exception, test is failing during to another reason.");
+        } finally {
+            environmentVariables.set("RECORD_AND_UPLOAD_MINIMUM_DISKSPACE", "1");
             resetStdOut();
         }
     }
