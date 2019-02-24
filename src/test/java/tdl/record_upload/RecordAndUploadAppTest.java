@@ -6,15 +6,21 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.util.Objects;
 
+import static junit.framework.TestCase.fail;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
 public class RecordAndUploadAppTest {
+
+    private PrintStream orgStream   = null;
 
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
@@ -52,6 +58,31 @@ public class RecordAndUploadAppTest {
 
     @Test
     public void orchestratesMultipleThreads() throws Exception {
+        runRecordAndUploadApp();
+
+        // Assert on the generated log
+        File[] logFiles = tempFolder.getRoot().listFiles((dir, name) -> name.endsWith(".log"));
+        assertThat("Logs are generated and rotated before final upload",
+                Objects.requireNonNull(logFiles).length, is(2));
+
+        String logContents = readFile(logFiles[0]) + readFile(logFiles[1]);
+        assertThat("starts the Main thread", logContents, containsString("[Main]"));
+        assertThat("starts the Upload thread", logContents, containsString("[Upload]"));
+        assertThat("starts the Metrics thread", logContents, containsString("[Metrics]"));
+
+        assertThat("syncs with remote", logContents, containsString("Sync local files with remote"));
+        assertThat("captures video frame 1", logContents, containsString("tick   1, video recoding"));
+        assertThat("captures video frame 2", logContents, containsString("tick   2, video recoding"));
+        assertThat("captures source code 1", logContents, containsString("frame no.  1, source code"));
+        assertThat("captures source code 2", logContents, containsString("frame no.  2, source code"));
+
+        assertThat("receives external notify payload", logContents, containsString("TheExternalTag"));
+
+        assertThat("uploads remaining parts on shutdown", logContents,
+                containsString("Upload remaining parts and finalise recording session"));
+    }
+
+    private void runRecordAndUploadApp() throws Exception {
         // Prepare output folder
         String storagePath = tempFolder.getRoot().getPath();
         System.out.println("Writing logs to "+storagePath);
@@ -77,27 +108,42 @@ public class RecordAndUploadAppTest {
         System.out.println("Stopping the test by sending the stop command");
         appThread.sendStop();
         appThread.join();
+    }
 
-        // Assert on the generated log
-        File[] logFiles = tempFolder.getRoot().listFiles((dir, name) -> name.endsWith(".log"));
-        assertThat("Logs are generated and rotated before final upload",
-                Objects.requireNonNull(logFiles).length, is(2));
+    @Test
+    public void startAppIfDiskSpaceRequirementPasses() {
+        try {
+            String stdoutputLogFilePath = redirectStdOutToFile(tempFolder.getRoot().getPath());
 
-        String logContents = readFile(logFiles[0]) + readFile(logFiles[1]);
-        assertThat("starts the Main thread", logContents, containsString("[Main]"));
-        assertThat("starts the Upload thread", logContents, containsString("[Upload]"));
-        assertThat("starts the Metrics thread", logContents, containsString("[Metrics]"));
+            runRecordAndUploadApp();
 
-        assertThat("syncs with remote", logContents, containsString("Sync local files with remote"));
-        assertThat("captures video frame 1", logContents, containsString("tick   1, video recoding"));
-        assertThat("captures video frame 2", logContents, containsString("tick   2, video recoding"));
-        assertThat("captures source code 1", logContents, containsString("frame no.  1, source code"));
-        assertThat("captures source code 2", logContents, containsString("frame no.  2, source code"));
+            String logContents = readFile(new File(stdoutputLogFilePath));
+            assertThat("Did not perform the disk space requirement check", logContents, containsString("Available disk space on the"));
+            assertThat("Did not meet the disk space requirement check", logContents, containsString("Start S3 Sync session"));
+        } catch (Exception ex) {
+            fail("Should have NOT thrown an exception, if disk space requirements are met. Error message: " + ex.getMessage());
+        } finally {
+            resetStdOut();
+        }
+    }
 
-        assertThat("receives external notify payload", logContents, containsString("TheExternalTag"));
+    private String redirectStdOutToFile(String storagePath) throws FileNotFoundException {
+        String stdoutputLogFilePath = storagePath + File.separator + "recordAndUploadAppTest-stdout.logs";
+        System.out.println("Redirecting stdout to a file stream: " + stdoutputLogFilePath);
+        System.out.println("All messages (including logs) meant for stdout will be redirected to this file.");
 
-        assertThat("uploads remaining parts on shutdown", logContents,
-                containsString("Upload remaining parts and finalise recording session"));
+        orgStream = System.out;
+        PrintStream fileStream = new PrintStream(new FileOutputStream(stdoutputLogFilePath, true));
+
+        System.setOut(fileStream);
+
+        return stdoutputLogFilePath;
+    }
+
+    private void resetStdOut() {
+        System.setOut(orgStream);
+
+        System.out.println("Setting stdout back to its original stream.");
     }
 
     private String readFile(File logFile) throws IOException {
