@@ -90,6 +90,39 @@ Run the self-test on the generated jar file:
 java -jar build/libs/record-and-upload-linux-*-all.jar --run-self-test
 ```
 
+### Minimum disk requirement tests
+
+Run these below tests to verify the app is checking for minimum disk space requirements:
+
+#### Run the app in a docker container with just 4mb of memory
+
+```bash
+$ cd scripts/tests
+
+$ ./runDockerContainerWith4MBRAM.sh
+```
+
+Note: The docker container script maps the current project directory into the container so the script works seamlessly.
+
+#### Run the app by simulating a low-disk space by setting the `RECORD_AND_UPLOAD_MINIMUM_DISKSPACE` to a very high number 
+
+```bash
+$ cd scripts/tests
+
+$ ./runAppNotMeetingRequirementViaEnvVarSetting.sh
+```
+
+Note: This script should run in any local environment (does not need a docker or VM environment).
+
+#### Run the app in a low-disk space environment (i.e. VM with < 1GB free disk space) 
+
+```bash
+$ cd scripts/tests
+
+$ ./runAppNotMeetingRequirement.sh
+```
+
+Note: In the above case, the current project directory will need to be mapped as a volume so the respective scripts runs seamlessly.  
 
 ### To release
 
