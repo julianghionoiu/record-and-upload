@@ -54,7 +54,7 @@ public class RecordAndUploadApp {
 
         //~~ Minimum requirements
 
-        @Parameter(names = {"--minimum-required-diskspace"}, description = "Minimum required diskspace (in GB) on the current volume (or drive) for the app to run")
+        @Parameter(names = {"--minimum-required-diskspace-gb"}, description = "Minimum required diskspace (in GB) on the current volume (or drive) for the app to run")
         private long minimumRequiredDiskspaceInGB = 1;
 
         //~~ Graceful degradation flags

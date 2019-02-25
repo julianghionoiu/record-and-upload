@@ -114,7 +114,7 @@ $ ./runAppNotMeetingRequirement.sh
 
 Note: In the above case, the current project directory will need to be mapped as a volume so the respective scripts runs seamlessly.  
 
-#### Run the app simulating a low-disk space environment (using the --minimum-required-diskspace CLI param) 
+#### Run the app simulating a low-disk space environment (using the --minimum-required-diskspace-gb CLI param) 
 
 ```bash
 $ cd scripts/tests
