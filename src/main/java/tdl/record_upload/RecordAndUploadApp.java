@@ -183,6 +183,8 @@ public class RecordAndUploadApp {
             log.error(String.format("Sorry, you need at least %dGB of free disk space on this volume (or drive), in order to run the screen recording app (in either modes: video-enabled or video-disabled).", minimumRequiredDiskspaceHumanReadable));
             log.warn("Please make free up some disk space on this volume (or drive) and try running the screen recording app again.");
         }
+
+        System.exit(-1);
     }
 
     private static int getMinimumRequiredDiskspace() {

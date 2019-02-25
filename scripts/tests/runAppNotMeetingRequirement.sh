@@ -49,26 +49,24 @@ exitCodeFile=$(mktemp)
 results=$( (java -jar ${PROJECT_ROOT_FOLDER}/build/libs/record-and-upload-${OSARCH}-*all.jar --config ${PROJECT_ROOT_FOLDER}/.private/aws-test-secrets --store ${PROJECT_ROOT_FOLDER}/build/play && true); echo $? > "${exitCodeFile}" )
 
 exitCode=$(cat ${exitCodeFile})
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo " Running test on record and upload app to verify the minimum disk space requirement check" 1>&2
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" 1>&2
+echo " Running test on record and upload app to verify the minimum disk space requirement check"     1>&2
+echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" 1>&2
 
-if [[ ${exitCode} -eq 0 ]]; then
+if [[ ${exitCode} -ne 0 ]]; then
   if [[ $(echo ${results} | grep "Sorry, you need at least 1GB of free disk space on this volume (or drive)" ) ]]; then
-  	echo "Test PASSED" 1>&2
+  	echo "Test PASSED"          1>&2
   else
-  	echo "	App failed due to other reasons than disk space requirements."
+  	echo "	App failed due to other reasons than disk space requirements." 1>&2
 
-  	echo "App execution logs:"
-  	echo ${results}
+  	echo "App execution logs:"  1>&2
+  	echo ${results}             1>&2
   fi
 else
-  echo "Test should NOT have failed due to non-zero exit code" 1>&2
-  echo "   Actual exit code: ${exitCode}"  1>&2
-  echo "   Expected exit code: 0"          1>&2
+  echo "Test should NOT have failed with a 0 exit code"                     1>&2
 
-  echo "Please check if the app is being run under the expected conditions"
+  echo "Please check if the app is being run under the expected conditions" 1>&2
 
-  echo "App execution logs:"
-  echo ${results}
+  echo "App execution logs:"  1>&2
+  echo ${results}             1>&2
 fi
