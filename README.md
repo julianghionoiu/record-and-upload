@@ -104,7 +104,7 @@ $ ./runDockerContainerWith4MBRAM.sh
 
 Note: The docker container script maps the current project directory into the container so the script works seamlessly.
 
-#### Run the app in a low-disk space environment (i.e. VM with < 1GB free disk space) 
+#### Run the app in a low-disk space environment (i.e. VM with <1GB free disk space) 
 
 ```bash
 $ cd scripts/tests
@@ -113,6 +113,16 @@ $ ./runAppNotMeetingRequirement.sh
 ```
 
 Note: In the above case, the current project directory will need to be mapped as a volume so the respective scripts runs seamlessly.  
+
+#### Run the app simulating a low-disk space environment (using the --minimum-required-diskspace CLI param) 
+
+```bash
+$ cd scripts/tests
+
+$ ./runAppNotMeetingRequirementViaCLIParam.sh
+```
+
+Note: In the above case, the test can be run in any environment, expect ensure free diskspace is lower than 100GB, necessary test condition.  
 
 ### To release
 
