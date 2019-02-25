@@ -185,7 +185,7 @@ public class RecordAndUploadApp {
         float availableDiskspaceInMB = (float) (availableDiskspace / ONE_MB);
         log.info(String.format("Available disk space on the volume (or drive) '%s': %dGB (%.3fMB)", userDriveOrVolume, availableDiskspaceInGB, availableDiskspaceInMB));
         if (availableDiskspace < minimumRequiredDiskspace) {
-            log.error(String.format("Sorry, you need at least %dGB of free disk space on this volume (or drive), in order to run the screen recording app (in either modes: video-enabled or video-disabled).", minimumRequiredDiskspaceHumanReadable));
+            log.error(String.format("Sorry, you need at least %dGB of free disk space on this volume (or drive), in order to run the screen recording app.", minimumRequiredDiskspaceHumanReadable));
             log.warn("Please make free up some disk space on this volume (or drive) and try running the screen recording app again.");
 
             System.exit(-1);
