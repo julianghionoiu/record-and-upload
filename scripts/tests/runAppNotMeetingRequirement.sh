@@ -32,12 +32,14 @@ if [[ ${exitCode} -ne 0 ]]; then
   if [[ $(echo ${results} | grep "Sorry, you need at least 1GB of free disk space on this volume (or drive)" ) ]]; then
   	echo "Test PASSED"          1>&2
   else
+    echo "Test FAILED"
   	echo "	App failed due to other reasons than disk space requirements." 1>&2
 
   	echo "App execution logs:"  1>&2
   	echo ${results}             1>&2
   fi
 else
+  echo "Test FAILED"
   echo "Test should NOT have failed with a 0 exit code"                     1>&2
 
   echo "Please check if the app is run under the expected conditions" 1>&2
