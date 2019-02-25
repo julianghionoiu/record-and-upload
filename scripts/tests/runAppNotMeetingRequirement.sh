@@ -65,7 +65,7 @@ if [[ ${exitCode} -ne 0 ]]; then
 else
   echo "Test should NOT have failed with a 0 exit code"                     1>&2
 
-  echo "Please check if the app is being run under the expected conditions" 1>&2
+  echo "Please check if the app is run under the expected conditions" 1>&2
 
   echo "App execution logs:"  1>&2
   echo ${results}             1>&2
