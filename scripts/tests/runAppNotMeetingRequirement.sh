@@ -4,19 +4,8 @@ set -e
 set -u
 set -o pipefail
 
-PROJECT_ROOT_FOLDER=$(realpath $(pwd)/../../)
-
-RED='\033[0;31m'
-NC='\033[0m' # No Color
-
-ONE_GB=$((1024 * 1024))
-
-MINIMUM_REQUIRED_DISKSPACE_HUMAN_READABLE=1
-MINIMUM_REQUIRED_DISKSPACE=$((${MINIMUM_REQUIRED_DISKSPACE_HUMAN_READABLE} * ${ONE_GB}))
-AVAILABLE_DISKSPACE=$(df --output=avail $(pwd) | tail -n 1 | awk '{print $1}')   ### Should work on both Linux and MacOS
-AVAILABLE_DISKSPACE_HUMAN_READABLE=$((${AVAILABLE_DISKSPACE} / ${ONE_GB}))
-echo "Available disk space on '$(pwd)': ${AVAILABLE_DISKSPACE_HUMAN_READABLE}GB"
-echo ""
+SCRIPT_CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source ${SCRIPT_CURRENT_DIR}/common-functions.sh
 
 if [[ "${AVAILABLE_DISKSPACE}" -gt "${MINIMUM_REQUIRED_DISKSPACE}" ]]; then
    echo "${RED}Sorry, you need under ${MINIMUM_REQUIRED_DISKSPACE_HUMAN_READABLE}GB of free disk space on this drive, in order for this test to work."
@@ -27,21 +16,7 @@ fi
 
 mkdir -p localstore
 
-OSARCH="linux"
-case "$(uname)" in
-  CYGWIN* )
-    OSARCH="windows"
-    ;;
-
-  Darwin* )
-    OSARCH="macos"
-    ;;
-
-  MINGW* )
-    OSARCH="windows"
-    ;;
-
-esac
+OSARCH=$(getOSArch)
 
 echo "Detected OS: ${OSARCH}"
 
