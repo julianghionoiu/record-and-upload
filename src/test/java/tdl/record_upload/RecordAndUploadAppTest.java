@@ -3,31 +3,21 @@ package tdl.record_upload;
 import com.mashape.unirest.http.Unirest;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.nio.file.Files;
 import java.util.Objects;
 
-import static junit.framework.TestCase.fail;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
 public class RecordAndUploadAppTest {
 
-    private PrintStream orgStream   = null;
-
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
-
-    @Rule
-    public EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
     @SuppressWarnings("SameParameterValue")
     public class MainAppThread extends Thread {
@@ -112,62 +102,6 @@ public class RecordAndUploadAppTest {
         System.out.println("Stopping the test by sending the stop command");
         appThread.sendStop();
         appThread.join();
-    }
-
-    @Test
-    public void startAppIfDiskSpaceRequirementPasses() {
-        try {
-            String stdoutputLogFilePath = redirectStdOutToFile(tempFolder.getRoot().getPath());
-
-            runRecordAndUploadApp();
-
-            String logContents = readFile(new File(stdoutputLogFilePath));
-            assertThat("Did not perform the disk space requirement check", logContents, containsString("Available disk space on the"));
-            assertThat("Did not meet the disk space requirement check", logContents, containsString("Start S3 Sync session"));
-        } catch (Exception ex) {
-            fail("Should have NOT thrown an exception, if disk space requirements are met. Error message: " + ex.getMessage());
-        } finally {
-            resetStdOut();
-        }
-    }
-
-    @Test
-    public void abortAppIfDiskSpaceRequirementFails() {
-        String stdoutputLogFilePath = "";
-        try {
-            environmentVariables.set("RECORD_AND_UPLOAD_MINIMUM_DISKSPACE", "100");
-            stdoutputLogFilePath = redirectStdOutToFile(tempFolder.getRoot().getPath());
-
-            runRecordAndUploadApp();
-
-            String logContents = readFile(new File(stdoutputLogFilePath));
-            assertThat("Did not perform the disk space requirement check", logContents, containsString("Available disk space on the"));
-            assertThat("Did not fail when the disk space requirement was not met", logContents, containsString("Start S3 Sync session"));
-        } catch (Exception ex) {
-            fail("Should have NOT thrown an exception, test is failing during to another reason.");
-        } finally {
-            environmentVariables.set("RECORD_AND_UPLOAD_MINIMUM_DISKSPACE", "1");
-            resetStdOut();
-        }
-    }
-
-    private String redirectStdOutToFile(String storagePath) throws FileNotFoundException {
-        String stdoutputLogFilePath = storagePath + File.separator + "recordAndUploadAppTest-stdout.logs";
-        System.out.println("Redirecting stdout to a file stream: " + stdoutputLogFilePath);
-        System.out.println("All messages (including logs) meant for stdout will be redirected to this file.");
-
-        orgStream = System.out;
-        PrintStream fileStream = new PrintStream(new FileOutputStream(stdoutputLogFilePath, true));
-
-        System.setOut(fileStream);
-
-        return stdoutputLogFilePath;
-    }
-
-    private void resetStdOut() {
-        System.setOut(orgStream);
-
-        System.out.println("Setting stdout back to its original stream.");
     }
 
     private String readFile(File logFile) throws IOException {
