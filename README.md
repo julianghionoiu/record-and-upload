@@ -124,6 +124,18 @@ $ ./runAppNotMeetingRequirementViaCLIParam.sh
 
 Note: In the above case, the test can be run in any environment, expect ensure free diskspace is lower than 100GB, necessary test condition.  
 
+#### Run the app under happy path setup
+
+```bash
+$ cd scripts/tests
+
+$ ./runAppMeetingRequirement.sh
+```
+
+Note: In the above case, the test can be run in an environment with diskspace greater than 1GB, in order for the test to work.  
+
+**Note:** `common-functions.sh` has be used in all the above scripts, contains common aspects of the test scripts.
+
 ### To release
 
 ```bash
