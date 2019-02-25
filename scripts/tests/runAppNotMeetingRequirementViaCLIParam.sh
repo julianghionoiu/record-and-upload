@@ -4,25 +4,12 @@ set -e
 set -u
 set -o pipefail
 
-PROJECT_ROOT_FOLDER=$(realpath $(pwd)/../../)
+SCRIPT_CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source ${SCRIPT_CURRENT_DIR}/common-functions.sh
 
 mkdir -p localstore
 
-OSARCH="linux"
-case "$(uname)" in
-  CYGWIN* )
-    OSARCH="windows"
-    ;;
-
-  Darwin* )
-    OSARCH="macos"
-    ;;
-
-  MINGW* )
-    OSARCH="windows"
-    ;;
-
-esac
+OSARCH=$(getOSArch)
 
 echo "Detected OS: ${OSARCH}"
 
