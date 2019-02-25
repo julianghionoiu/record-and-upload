@@ -7,6 +7,13 @@ set -o pipefail
 SCRIPT_CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source ${SCRIPT_CURRENT_DIR}/common-functions.sh
 
+if [[ "${AVAILABLE_DISKSPACE}" -lt "${MINIMUM_REQUIRED_DISKSPACE}" ]]; then
+   echo "${RED}Sorry, you need ${MINIMUM_REQUIRED_DISKSPACE_HUMAN_READABLE}GB of free disk space on this drive, in order for this test to work."
+   echo ""
+   echo "Please make sure the expected environment is setup on '$(pwd)' and try running the test again.${NC}"
+   exit -1
+fi
+
 mkdir -p localstore
 
 OSARCH=$(getOSArch)
