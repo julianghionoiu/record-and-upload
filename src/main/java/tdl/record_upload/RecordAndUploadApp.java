@@ -52,6 +52,11 @@ public class RecordAndUploadApp {
         @Parameter(names = {"--sourcecode"}, description = "The folder that contains the source code that needs to be tracked")
         private String localSourceCodeFolder = ".";
 
+        //~~ Minimum requirements
+
+        @Parameter(names = {"--minimum-required-diskspace"}, description = "Minimum required diskspace (in GB) on the current volume (or drive) for the app to run")
+        private long minimumRequiredDiskspaceInGB = 1;
+
         //~~ Graceful degradation flags
 
         @Parameter(names = "--no-video", description = "Disable video recording")
@@ -76,10 +81,11 @@ public class RecordAndUploadApp {
     public static void main(String[] args) {
         log.info("Starting recording app");
 
-        checkDiskspaceRequirements();
         Params params = new Params();
         JCommander jCommander = new JCommander(params);
         jCommander.parse(args);
+
+        checkDiskspaceRequirements(params.minimumRequiredDiskspaceInGB);
 
         if (params.runSelfTest) {
             S3BucketDestination.runSanityCheck();
@@ -169,9 +175,8 @@ public class RecordAndUploadApp {
         }
     }
 
-    private static void checkDiskspaceRequirements() {
+    private static void checkDiskspaceRequirements(long minimumRequiredDiskspaceHumanReadable) {
         log.info("Checking diskspace");
-        int minimumRequiredDiskspaceHumanReadable = getMinimumRequiredDiskspace(); // in GB;
         long minimumRequiredDiskspace = minimumRequiredDiskspaceHumanReadable * ONE_GB;
         String userDirectory = System.getProperty("user.dir");
         String userDriveOrVolume = Paths.get(userDirectory).getRoot().toString();
@@ -185,14 +190,6 @@ public class RecordAndUploadApp {
         }
 
         System.exit(-1);
-    }
-
-    private static int getMinimumRequiredDiskspace() {
-        try {
-            return Integer.parseInt(System.getenv("RECORD_AND_UPLOAD_MINIMUM_DISKSPACE"));
-        } catch (Exception ex) {
-            return 1;
-        }
     }
 
     private static long getAvailableDiskspaceFor(String directory) {
