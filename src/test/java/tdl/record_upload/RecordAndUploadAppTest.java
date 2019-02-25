@@ -52,31 +52,6 @@ public class RecordAndUploadAppTest {
 
     @Test
     public void orchestratesMultipleThreads() throws Exception {
-        runRecordAndUploadApp();
-
-        // Assert on the generated log
-        File[] logFiles = tempFolder.getRoot().listFiles((dir, name) -> name.endsWith(".log"));
-        assertThat("Logs are generated and rotated before final upload",
-                Objects.requireNonNull(logFiles).length, is(2));
-
-        String logContents = readFile(logFiles[0]) + readFile(logFiles[1]);
-        assertThat("starts the Main thread", logContents, containsString("[Main]"));
-        assertThat("starts the Upload thread", logContents, containsString("[Upload]"));
-        assertThat("starts the Metrics thread", logContents, containsString("[Metrics]"));
-
-        assertThat("syncs with remote", logContents, containsString("Sync local files with remote"));
-        assertThat("captures video frame 1", logContents, containsString("tick   1, video recoding"));
-        assertThat("captures video frame 2", logContents, containsString("tick   2, video recoding"));
-        assertThat("captures source code 1", logContents, containsString("frame no.  1, source code"));
-        assertThat("captures source code 2", logContents, containsString("frame no.  2, source code"));
-
-        assertThat("receives external notify payload", logContents, containsString("TheExternalTag"));
-
-        assertThat("uploads remaining parts on shutdown", logContents,
-                containsString("Upload remaining parts and finalise recording session"));
-    }
-
-    private void runRecordAndUploadApp() throws Exception {
         // Prepare output folder
         String storagePath = tempFolder.getRoot().getPath();
         System.out.println("Writing logs to "+storagePath);
@@ -102,6 +77,27 @@ public class RecordAndUploadAppTest {
         System.out.println("Stopping the test by sending the stop command");
         appThread.sendStop();
         appThread.join();
+
+        // Assert on the generated log
+        File[] logFiles = tempFolder.getRoot().listFiles((dir, name) -> name.endsWith(".log"));
+        assertThat("Logs are generated and rotated before final upload",
+                Objects.requireNonNull(logFiles).length, is(2));
+
+        String logContents = readFile(logFiles[0]) + readFile(logFiles[1]);
+        assertThat("starts the Main thread", logContents, containsString("[Main]"));
+        assertThat("starts the Upload thread", logContents, containsString("[Upload]"));
+        assertThat("starts the Metrics thread", logContents, containsString("[Metrics]"));
+
+        assertThat("syncs with remote", logContents, containsString("Sync local files with remote"));
+        assertThat("captures video frame 1", logContents, containsString("tick   1, video recoding"));
+        assertThat("captures video frame 2", logContents, containsString("tick   2, video recoding"));
+        assertThat("captures source code 1", logContents, containsString("frame no.  1, source code"));
+        assertThat("captures source code 2", logContents, containsString("frame no.  2, source code"));
+
+        assertThat("receives external notify payload", logContents, containsString("TheExternalTag"));
+
+        assertThat("uploads remaining parts on shutdown", logContents,
+                containsString("Upload remaining parts and finalise recording session"));
     }
 
     private String readFile(File logFile) throws IOException {
