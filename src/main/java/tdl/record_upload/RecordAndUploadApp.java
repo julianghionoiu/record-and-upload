@@ -4,6 +4,7 @@ import ch.qos.logback.classic.LoggerContext;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileSystemUtils;
 import org.slf4j.LoggerFactory;
 import tdl.record.screen.video.VideoRecorder;
 import tdl.record.sourcecode.record.SourceCodeRecorder;
@@ -38,6 +39,9 @@ import java.util.List;
 @Slf4j
 public class RecordAndUploadApp {
 
+    private static final int ONE_GB = 1024 * 1024;
+    private static final int ONE_MB = 1024;
+
     private static class Params {
         @Parameter(names = {"--store"}, description = "The folder that will store the recordings")
         private String localStorageFolder = "./build/play/userX";
@@ -47,6 +51,11 @@ public class RecordAndUploadApp {
 
         @Parameter(names = {"--sourcecode"}, description = "The folder that contains the source code that needs to be tracked")
         private String localSourceCodeFolder = ".";
+
+        //~~ Minimum requirements
+
+        @Parameter(names = {"--minimum-required-diskspace-gb"}, description = "Minimum required diskspace (in GB) on the current volume (or drive) for the app to run")
+        private long minimumRequiredDiskspaceInGB = 1;
 
         //~~ Graceful degradation flags
 
@@ -69,11 +78,14 @@ public class RecordAndUploadApp {
     }
 
 
-    public static void main(String[] args)  {
+    public static void main(String[] args) {
         log.info("Starting recording app");
+
         Params params = new Params();
         JCommander jCommander = new JCommander(params);
         jCommander.parse(args);
+
+        checkDiskspaceRequirements(params.minimumRequiredDiskspaceInGB);
 
         if (params.runSelfTest) {
             S3BucketDestination.runSanityCheck();
@@ -160,6 +172,35 @@ public class RecordAndUploadApp {
                 // Forcefully stop. A problem with Jetty finalisation might prevent the JVM from stopping
                 Runtime.getRuntime().halt(0);
             }
+        }
+    }
+
+    private static void checkDiskspaceRequirements(long minimumRequiredDiskspaceHumanReadable) {
+        log.info("Checking diskspace");
+        long minimumRequiredDiskspace = minimumRequiredDiskspaceHumanReadable * ONE_GB;
+        String userDirectory = System.getProperty("user.dir");
+        String userDriveOrVolume = Paths.get(userDirectory).getRoot().toString();
+        long availableDiskspace = getAvailableDiskspaceFor(userDriveOrVolume);
+        long availableDiskspaceInGB = availableDiskspace / ONE_GB;
+        float availableDiskspaceInMB = (float) (availableDiskspace / ONE_MB);
+        log.info(String.format("Available disk space on the volume (or drive) '%s': %dGB (%.3fMB)", userDriveOrVolume, availableDiskspaceInGB, availableDiskspaceInMB));
+        if (availableDiskspace < minimumRequiredDiskspace) {
+            log.error(String.format("Sorry, you need at least %dGB of free disk space on this volume (or drive), in order to run the screen recording app.", minimumRequiredDiskspaceHumanReadable));
+            log.warn("Please make free up some disk space on this volume (or drive) and try running the screen recording app again.");
+
+            System.exit(-1);
+        }
+    }
+
+    private static long getAvailableDiskspaceFor(String directory) {
+        try {
+            return FileSystemUtils.freeSpaceKb(directory);
+        } catch (IOException ex) {
+            throw new RuntimeException(
+                    String.format("Exception when trying to fetch available " +
+                            "free disk space for volume (or drive): %s, error: %s",
+                            directory, ex.getMessage())
+            );
         }
     }
 
