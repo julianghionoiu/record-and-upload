@@ -29,12 +29,5 @@ if [[ ${exitCode} -ne 0 ]]; then
     testFailedDueToOtherReasonsNotification ${results}
   fi
 else
-  echo "Test FAILED"
-  echo "Test should NOT have failed with a 0 exit code"               1>&2
-
-  echo "Please check if the app is run under the expected conditions" 1>&2
-
-  echo "App execution logs:"  1>&2
-  echo ${results}             1>&2
-  exit -1
+  testFailedDueToExitCodeNotification "0" ${results}
 fi
