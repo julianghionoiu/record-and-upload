@@ -35,7 +35,7 @@ if [[ ${exitCode} -ne 0 ]]; then
   fi
 else
   echo "Test FAILED"
-  echo "Test should NOT have failed with a 0 exit code"                     1>&2
+  echo "Test should NOT have failed with a 0 exit code"               1>&2
 
   echo "Please check if the app is run under the expected conditions" 1>&2
 

@@ -29,7 +29,7 @@ echo " Running test on record and upload app to verify the minimum disk space re
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" 1>&2
 
 if [[ ${exitCode} -ne 0 ]]; then
-  if [[ $(echo ${results} | grep "Sorry, you need at least 1GB of free disk space on this volume (or drive)" ) ]]; then
+  if [[ $(echo ${results} | grep "Sorry, you need at least ${MINIMUM_REQUIRED_DISKSPACE_HUMAN_READABLE}GB of free disk space on this volume (or drive)" ) ]]; then
   	echo "Test PASSED"          1>&2
   else
     echo "Test FAILED"
@@ -41,7 +41,7 @@ if [[ ${exitCode} -ne 0 ]]; then
   fi
 else
   echo "Test FAILED"
-  echo "Test should NOT have failed with a 0 exit code"                     1>&2
+  echo "Test should NOT have failed with a 0 exit code"               1>&2
 
   echo "Please check if the app is run under the expected conditions" 1>&2
 
