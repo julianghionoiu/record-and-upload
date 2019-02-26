@@ -36,3 +36,15 @@ function getOSArch() {
 
     echo ${OSARCH}
 }
+
+function testFailedDueToOtherReasonsNotification() {
+    results=$1
+
+    echo "Test FAILED"
+    echo "  App failed due to other reasons than disk space requirements." 1>&2
+
+    echo "App execution logs:"  1>&2
+    echo ${results}             1>&2
+
+    exit -1
+}

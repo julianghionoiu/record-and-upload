@@ -32,12 +32,7 @@ if [[ ${exitCode} -eq 0 ]]; then
   if [[ $(echo ${results} | grep "Start S3 Sync session" ) ]]; then
   	echo "Test PASSED"          1>&2
   else
-    echo "Test FAILED"
-  	echo "	App failed due to other reasons than disk space requirements." 1>&2
-
-  	echo "App execution logs:"  1>&2
-  	echo ${results}             1>&2
-    exit -1
+    testFailedDueToOtherReasonsNotification ${results}
   fi
 else
   echo "Test FAILED"

@@ -32,12 +32,7 @@ if [[ ${exitCode} -ne 0 ]]; then
   if [[ $(echo ${results} | grep "Sorry, you need at least ${MINIMUM_REQUIRED_DISKSPACE_HUMAN_READABLE}GB of free disk space on this volume (or drive)" ) ]]; then
   	echo "Test PASSED"          1>&2
   else
-    echo "Test FAILED"
-  	echo "	App failed due to other reasons than disk space requirements." 1>&2
-
-  	echo "App execution logs:"  1>&2
-  	echo ${results}             1>&2
-    exit -1
+    testFailedDueToOtherReasonsNotification ${results}
   fi
 else
   echo "Test FAILED"
