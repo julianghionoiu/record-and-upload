@@ -31,6 +31,7 @@ if [[ ${exitCode} -ne 0 ]]; then
 
   	echo "App execution logs:"  1>&2
   	echo ${results}             1>&2
+    exit -1
   fi
 else
   echo "Test FAILED"
@@ -40,4 +41,5 @@ else
 
   echo "App execution logs:"  1>&2
   echo ${results}             1>&2
+  exit -1
 fi
