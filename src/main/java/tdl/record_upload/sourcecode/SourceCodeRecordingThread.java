@@ -28,7 +28,7 @@ public class SourceCodeRecordingThread extends Thread implements MonitoredBackgr
         SourceCodeRecordingMetricsCollector sourceCodeRecordingMetricsCollector = new SourceCodeRecordingMetricsCollector();
         sourceCodeRecordingStatus = new SourceCodeRecordingStatus(sourceCodeRecordingMetricsCollector);
         CopyFromDirectorySourceCodeProvider sourceCodeProvider = new CopyFromDirectorySourceCodeProvider(
-                sourceCodeFolder);
+                sourceCodeFolder, 1);
         sourceCodeRecorder = new SourceCodeRecorder.Builder(sourceCodeProvider, sourceCodeRecordingFile)
                 .withTimeSource(new SystemMonotonicTimeSource())
                 .withSnapshotEvery(3, TimeUnit.MINUTES)
