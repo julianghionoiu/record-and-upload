@@ -5,7 +5,6 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import org.apache.commons.io.FileSystemUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import tdl.record.screen.video.VideoRecorder;
 import tdl.record.sourcecode.record.SourceCodeRecorder;
 import tdl.record_upload.events.ExternalEventServerThread;
@@ -234,6 +233,10 @@ public class RecordAndUploadApp {
         MetricsReportingTask metricsReportingTask = new MetricsReportingTask(monitoredSubjects);
         metricsReportingTask.scheduleReportMetricsEvery(Duration.of(2, ChronoUnit.SECONDS));
 
+        // Start the health check thread
+        HealthCheckTask healthCheckTask = new HealthCheckTask(serviceThreadsToStop);
+        healthCheckTask.scheduleHealthCheckEvery(Duration.of(2, ChronoUnit.SECONDS));
+
         // Start the event server
         externalEventServerThread.start();
 
@@ -249,6 +252,7 @@ public class RecordAndUploadApp {
         // Finalise the upload and cancel tasks
         forceLoggingFileRotation(localStorageFolder);
         remoteSyncTask.finalRun();
+        healthCheckTask.cancel();
         metricsReportingTask.cancel();
 
         // Join the event thread

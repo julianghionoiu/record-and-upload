@@ -13,7 +13,7 @@ import java.time.format.DateTimeFormatter;
 
 import static org.slf4j.LoggerFactory.*;
 
-public class VideoRecordingStatus implements MonitoredSubject {
+class VideoRecordingStatus {
     private static final Logger log = getLogger(VideoRecordingStatus.class);
     private static final NumberFormat percentageFormatter = NumberFormat.getPercentInstance();
     private static final NumberFormat sizeFormatter = NumberFormat.getNumberInstance();
@@ -39,19 +39,16 @@ public class VideoRecordingStatus implements MonitoredSubject {
         this.runCounter = 0;
     }
 
-    @Override
-    public boolean isActive() {
+    boolean isActive() {
         return videoRecordingMetricsCollector.isCurrentlyRecording();
     }
 
-    @Override
-    public void displayErrors(Logger log) {
+    void displayErrors(Logger log) {
         runCounter += 1;
         checkForRecordingDrift(log);
     }
 
-    @Override
-    public void displayMetrics(StringBuilder displayBuffer) {
+    void displayMetrics(StringBuilder displayBuffer) {
         // Compute duration
         int fps = videoRecordingMetricsCollector.getInputFrameRate().getDenominator();
         long recordedSeconds = videoRecordingMetricsCollector.getTotalFrames() / fps;

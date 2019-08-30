@@ -54,6 +54,11 @@ public class ExternalEventServerThread implements Stoppable {
     }
 
     @Override
+    public boolean isAlive() {
+        return server.isRunning();
+    }
+
+    @Override
     public void join() throws InterruptedException {
         server.join();
     }

@@ -6,26 +6,23 @@ import tdl.record_upload.MonitoredSubject;
 
 import java.util.concurrent.TimeUnit;
 
-public class SourceCodeRecordingStatus implements MonitoredSubject {
+class SourceCodeRecordingStatus  {
 
     private SourceCodeRecordingMetricsCollector sourceCodeRecordingMetricsCollector;
 
-    public SourceCodeRecordingStatus(SourceCodeRecordingMetricsCollector sourceCodeRecordingMetricsCollector) {
+    SourceCodeRecordingStatus(SourceCodeRecordingMetricsCollector sourceCodeRecordingMetricsCollector) {
         this.sourceCodeRecordingMetricsCollector = sourceCodeRecordingMetricsCollector;
     }
 
-    @Override
-    public boolean isActive() {
+    boolean isActive() {
         return sourceCodeRecordingMetricsCollector.isCurrentlyRecording();
     }
 
-    @Override
-    public void displayErrors(Logger log) {
+    void displayErrors(Logger log) {
         // No error
     }
 
-    @Override
-    public void displayMetrics(StringBuilder displayBuffer) {
+    void displayMetrics(StringBuilder displayBuffer) {
         displayBuffer.append(
                 String.format("%2d source capture%s, %3d ms/capture",
                         sourceCodeRecordingMetricsCollector.getTotalSnapshots(),
