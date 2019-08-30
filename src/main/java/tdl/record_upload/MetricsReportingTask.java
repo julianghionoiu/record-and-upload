@@ -1,14 +1,16 @@
 package tdl.record_upload;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-@Slf4j
+import static org.slf4j.LoggerFactory.*;
+
 class MetricsReportingTask {
+    private static final Logger log = getLogger(MetricsReportingTask.class);
     private final Timer metricsTimer;
     private final StringBuilder displayBuffer;
     private final List<MonitoredSubject> monitoredSubjects;

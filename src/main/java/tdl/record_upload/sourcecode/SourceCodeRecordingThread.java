@@ -1,23 +1,22 @@
 package tdl.record_upload.sourcecode;
 
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import tdl.record.sourcecode.content.CopyFromDirectorySourceCodeProvider;
 import tdl.record.sourcecode.metrics.SourceCodeRecordingMetricsCollector;
 import tdl.record.sourcecode.record.SourceCodeRecorder;
-import tdl.record.sourcecode.record.SourceCodeRecorderException;
 import tdl.record.sourcecode.time.SystemMonotonicTimeSource;
 import tdl.record_upload.MonitoredBackgroundTask;
-import tdl.record_upload.Stoppable;
 
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
 
-@Slf4j
+import static org.slf4j.LoggerFactory.*;
+
 public class SourceCodeRecordingThread extends Thread implements MonitoredBackgroundTask {
     private static final Duration MAX_RECORDING_DURATION = Duration.of(12, ChronoUnit.HOURS);
+    private static final Logger log = getLogger(SourceCodeRecordingThread.class);
 
     private final SourceCodeRecorder sourceCodeRecorder;
     private final SourceCodeRecordingStatus sourceCodeRecordingStatus;

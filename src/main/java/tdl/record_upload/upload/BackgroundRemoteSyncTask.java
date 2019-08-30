@@ -1,6 +1,6 @@
 package tdl.record_upload.upload;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import tdl.s3.sync.Filters;
 import tdl.s3.sync.RemoteSync;
 import tdl.s3.sync.Source;
@@ -14,8 +14,10 @@ import java.util.TimerTask;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-@Slf4j
+import static org.slf4j.LoggerFactory.*;
+
 public class BackgroundRemoteSyncTask {
+    private static final Logger log = getLogger(BackgroundRemoteSyncTask.class);
     private final Timer syncTimer;
     private Lock syncLock;
     private final RemoteSync remoteSync;

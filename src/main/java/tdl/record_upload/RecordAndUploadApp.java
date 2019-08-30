@@ -3,8 +3,8 @@ package tdl.record_upload;
 import ch.qos.logback.classic.LoggerContext;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileSystemUtils;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tdl.record.screen.video.VideoRecorder;
 import tdl.record.sourcecode.record.SourceCodeRecorder;
@@ -36,9 +36,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@Slf4j
-public class RecordAndUploadApp {
+import static org.slf4j.LoggerFactory.*;
 
+public class RecordAndUploadApp {
+    private static final Logger log = getLogger(RecordAndUploadApp.class);
     private static final int ONE_GB = 1024 * 1024;
     private static final int ONE_MB = 1024;
 
@@ -279,7 +280,7 @@ public class RecordAndUploadApp {
     // ~~~~~ Helpers
 
     private static void startFileLogging(String localStorageFolder) {
-        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        LoggerContext loggerContext = (LoggerContext) getILoggerFactory();
         LockableFileLoggingAppender.addToContext(loggerContext, localStorageFolder);
     }
 
@@ -289,7 +290,7 @@ public class RecordAndUploadApp {
     }
 
     private static void stopFileLogging() {
-        LoggerContext loggerContext = (LoggerContext)LoggerFactory.getILoggerFactory();
+        LoggerContext loggerContext = (LoggerContext) getILoggerFactory();
         LockableFileLoggingAppender.removeFromContext(loggerContext);
     }
 

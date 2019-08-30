@@ -7,7 +7,6 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'us.kirchmeier:gradle-capsule-plugin:1.0.2'
         classpath 'ch.netzwerg:gradle-release-plugin:1.2.4'
         classpath 'org.kordamp.gradle:jdeps-gradle-plugin:0.4.1'
         classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.2'
@@ -61,7 +60,7 @@ ext {
 }
 
 dependencies {
-    compile ('ro.ghionoiu:dev-sourcecode-record:0.0.20') {
+    compile ('ro.ghionoiu:dev-sourcecode-record:0.0.21') {
         exclude group: 'com.beust', module: 'jcommander'
         exclude group: 'org.apache.httpcomponents'
     }
@@ -79,7 +78,6 @@ dependencies {
 
     compile 'org.slf4j:slf4j-api:1.7.25'
     compile 'ch.qos.logback:logback-classic:1.1.3'
-    compileOnly 'org.projectlombok:lombok:1.16.16'
 
     // Add the OS specific binaries
     if (humbleVideoBundleName != "unset") {
@@ -108,15 +106,11 @@ dependencies {
     testCompile 'org.hamcrest:hamcrest-core:1.3'
     testCompile 'org.hamcrest:hamcrest-library:1.3'
     testCompile 'com.mashape.unirest:unirest-java:1.4.9'
-    testCompileOnly 'org.projectlombok:lombok:1.16.16'
 }
 
 // ~~~~~ Packaging
 
-// Option 1 - Capsule which grabs the dependencies on demand
-apply plugin: 'us.kirchmeier.capsule'
-
-// Option 2 - Fat Jar which has everything inside
+// Fat Jar which has everything inside
 apply plugin: 'com.github.johnrengelman.shadow'
 shadowJar {
     manifest {
@@ -127,7 +121,6 @@ shadowJar {
         attributes 'Humble-Native-Root': "."
     }
 }
-
 
 mainClassName = "tdl.record_upload.RecordAndUploadApp"
 jar {
@@ -169,30 +162,6 @@ jdeps {
     jdkinternals = false
 
     enabled = project.hasProperty("enableJdeps")
-}
-
-task mavenCapsule(type: MavenCapsule){
-    applicationClass mainClassName
-
-    capsuleManifest {
-        minJavaVersion = '1.8.0'
-        dependencyConfiguration configurations.compile
-        repositories << 'jcenter'
-//        repositories << 'local'
-
-        //noinspection GroovyAssignabilityCheck
-        platform('windows'){
-            dependencies << 'io.humble:humble-video-arch-x86_64-w64-mingw32:'+humbleVideoVersion
-        }
-        //noinspection GroovyAssignabilityCheck
-        platform('macos'){
-            dependencies << 'io.humble:humble-video-arch-x86_64-apple-darwin12:'+humbleVideoVersion
-        }
-        //noinspection GroovyAssignabilityCheck
-        platform('linux'){
-            dependencies << 'io.humble:humble-video-arch-x86_64-pc-linux-gnu6:'+humbleVideoVersion
-        }
-    }
 }
 
 //~~~~~ Release management

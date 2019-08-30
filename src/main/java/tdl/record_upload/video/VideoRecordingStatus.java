@@ -1,6 +1,5 @@
 package tdl.record_upload.video;
 
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import tdl.record.screen.metrics.VideoRecordingMetricsCollector;
 import tdl.record_upload.MonitoredSubject;
@@ -12,8 +11,10 @@ import java.time.Duration;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
-@Slf4j
+import static org.slf4j.LoggerFactory.*;
+
 public class VideoRecordingStatus implements MonitoredSubject {
+    private static final Logger log = getLogger(VideoRecordingStatus.class);
     private static final NumberFormat percentageFormatter = NumberFormat.getPercentInstance();
     private static final NumberFormat sizeFormatter = NumberFormat.getNumberInstance();
     private static final DateTimeFormatter durationFormatter = DateTimeFormatter.ofPattern("H'h'mm'm'ss's'");
@@ -33,7 +34,7 @@ public class VideoRecordingStatus implements MonitoredSubject {
     private int runCounter;
     private final VideoRecordingMetricsCollector videoRecordingMetricsCollector;
 
-    public VideoRecordingStatus(VideoRecordingMetricsCollector videoRecordingMetricsCollector) {
+    VideoRecordingStatus(VideoRecordingMetricsCollector videoRecordingMetricsCollector) {
         this.videoRecordingMetricsCollector = videoRecordingMetricsCollector;
         this.runCounter = 0;
     }

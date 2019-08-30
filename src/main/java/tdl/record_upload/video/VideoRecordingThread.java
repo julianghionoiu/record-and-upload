@@ -1,6 +1,5 @@
 package tdl.record_upload.video;
 
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import tdl.record.screen.image.input.InputFromScreen;
 import tdl.record.screen.image.input.ScaleToOptimalSizeImage;
@@ -13,8 +12,10 @@ import java.io.File;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
-@Slf4j
+import static org.slf4j.LoggerFactory.*;
+
 public class VideoRecordingThread extends Thread implements MonitoredBackgroundTask {
+    private static final Logger log = getLogger(VideoRecordingThread.class);
     private static final Duration MAX_RECORDING_DURATION = Duration.of(12, ChronoUnit.HOURS);
 
     private final VideoRecorder videoRecorder;
