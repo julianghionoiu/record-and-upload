@@ -6,7 +6,7 @@ Command-line tool that records the screen as Fragmented MP4 and upload the fragm
 
 ### Download
 
-Download the `record-and-upload-PLATFORM-all.jar` from `https://github.com/julianghionoiu/record-and-upload/releases/latest`
+Download the `record-and-upload-PLATFORM.jar` from `https://github.com/julianghionoiu/record-and-upload/releases/latest`
 
 ### Configure
 
@@ -47,7 +47,7 @@ Run the test suite with Gradle:
 
 Run the self-test on the generated jar file:
 ```bash
-java -jar build/libs/record-and-upload-linux-*-all.jar --run-self-test
+java -jar build/libs/record-and-upload-linux-*.jar --run-self-test
 ```
 
 ### Minimum disk requirement tests

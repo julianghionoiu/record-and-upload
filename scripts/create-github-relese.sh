@@ -51,7 +51,6 @@ function uploadAsset() {
 
 }
 
-uploadAsset ${RELEASE_ID} "record-and-upload-${RELEASE_VERSION}-capsule.jar"
-uploadAsset ${RELEASE_ID} "record-and-upload-macos-${RELEASE_VERSION}-all.jar"
-uploadAsset ${RELEASE_ID} "record-and-upload-linux-${RELEASE_VERSION}-all.jar"
-uploadAsset ${RELEASE_ID} "record-and-upload-windows-${RELEASE_VERSION}-all.jar"
+uploadAsset ${RELEASE_ID} "record-and-upload-macos-${RELEASE_VERSION}.jar"
+uploadAsset ${RELEASE_ID} "record-and-upload-linux-${RELEASE_VERSION}.jar"
+uploadAsset ${RELEASE_ID} "record-and-upload-windows-${RELEASE_VERSION}.jar"

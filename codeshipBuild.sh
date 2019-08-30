@@ -5,12 +5,8 @@ set -xe
 # Run unit tests
 ./gradlew clean test --info --console=plain
 
-# Build and test the capsule
-./gradlew mavenCapsule --info --console=plain
-java -jar build/libs/record-and-upload-*-capsule.jar --run-self-test
-
 # Build and test native jars
 ./gradlew shadowJar -PvideoArch=macos --info --console=plain
 ./gradlew shadowJar -PvideoArch=linux --info --console=plain
 ./gradlew shadowJar -PvideoArch=windows --info --console=plain
-java -jar build/libs/record-and-upload-linux-*-all.jar --run-self-test
+java -jar build/libs/record-and-upload-linux-*.jar --run-self-test
