@@ -245,6 +245,7 @@ public class RecordAndUploadApp {
         for (Stoppable stoppable : serviceThreadsToStop) {
             stoppable.join();
         }
+        healthCheckTask.cancel();
 
         // If all are joined, signal the event thread to stop
         externalEventServerThread.signalStop();
@@ -252,7 +253,6 @@ public class RecordAndUploadApp {
         // Finalise the upload and cancel tasks
         forceLoggingFileRotation(localStorageFolder);
         remoteSyncTask.finalRun();
-        healthCheckTask.cancel();
         metricsReportingTask.cancel();
 
         // Join the event thread

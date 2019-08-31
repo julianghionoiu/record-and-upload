@@ -47,7 +47,7 @@ Run the test suite with Gradle:
 
 Run the self-test on the generated jar file:
 ```bash
-java -jar build/libs/record-and-upload-linux-*.jar --run-self-test
+java -jar build/libs/record-and-upload-macos-*-SNAPSHOT.jar --run-self-test
 ```
 
 ### Minimum disk requirement tests
