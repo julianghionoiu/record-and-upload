@@ -219,7 +219,7 @@ public class RecordAndUploadApp {
             serviceThreadsToStop.add(monitoredBackgroundTask);
             monitoredSubjects.add(monitoredBackgroundTask);
             externalEventServerThread.addNotifyListener(monitoredBackgroundTask);
-            externalEventServerThread.addStopListener(monitoredBackgroundTask);
+            externalEventServerThread.addStopListener(eventPayload -> monitoredBackgroundTask.signalStop());
         }
 
         // Start sync folder
@@ -236,6 +236,7 @@ public class RecordAndUploadApp {
         // Start the health check thread
         HealthCheckTask healthCheckTask = new HealthCheckTask(serviceThreadsToStop);
         healthCheckTask.scheduleHealthCheckEvery(Duration.of(2, ChronoUnit.SECONDS));
+        externalEventServerThread.addStopListener(eventPayload -> healthCheckTask.cancel());
 
         // Start the event server
         externalEventServerThread.start();

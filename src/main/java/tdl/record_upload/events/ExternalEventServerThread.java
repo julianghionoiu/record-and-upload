@@ -74,8 +74,8 @@ public class ExternalEventServerThread implements Stoppable {
         notifyListeners.add(externalEventListener);
     }
 
-    public void addStopListener(Stoppable stoppableComponent) {
-        stopListeners.add(eventPayload -> stoppableComponent.signalStop());
+    public void addStopListener(ExternalEventListener externalEventListener) {
+        stopListeners.add(externalEventListener);
     }
 
     //~~~~~~~~~ The commands that are being handled
