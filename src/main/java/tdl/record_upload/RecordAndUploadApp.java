@@ -242,7 +242,7 @@ public class RecordAndUploadApp {
         externalEventServerThread.start();
 
         // Wait for the stop signal and trigger a graceful shutdown
-        registerShutdownHook(serviceThreadsToStop);
+        registerShutdownHook(serviceThreadsToStop, healthCheckTask);
         for (Stoppable stoppable : serviceThreadsToStop) {
             stoppable.join();
         }
@@ -262,7 +262,7 @@ public class RecordAndUploadApp {
         stopFileLogging();
     }
 
-    private static void registerShutdownHook(List<Stoppable> servicesToStop) {
+    private static void registerShutdownHook(List<Stoppable> servicesToStop, HealthCheckTask healthCheckTask) {
         final Thread mainThread = Thread.currentThread();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             log.warn("Shutdown signal received - please wait for the upload to complete");
@@ -270,6 +270,7 @@ public class RecordAndUploadApp {
                 for (Stoppable stoppable : servicesToStop) {
                     stoppable.signalStop();
                 }
+                healthCheckTask.cancel();
             } catch (Exception e) {
                 log.error("Error sending the stop signals.", e);
             }

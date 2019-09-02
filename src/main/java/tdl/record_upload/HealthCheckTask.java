@@ -54,6 +54,7 @@ class HealthCheckTask {
     }
 
     void cancel() {
+        log.info("Stopping health check timer");
         metricsTimer.cancel();
     }
 }
