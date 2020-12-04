@@ -21,5 +21,5 @@ docker run -it \
            --volume ${PROJECT_ROOT_FOLDER}:/current-folder \
            --workdir /current-folder \
            java:8u111-jdk \
-           java -jar ./build/libs/record-and-upload-linux-0.0.20-SNAPSHOT-all.jar --config ./private/aws-test-secrets --store ./build/play
+           java -jar ./build/libs/record-and-upload-linux-0.0.21-SNAPSHOT-all.jar --config ./private/aws-test-secrets --store ./build/play
 
