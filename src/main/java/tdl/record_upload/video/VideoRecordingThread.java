@@ -8,6 +8,7 @@ import tdl.record.screen.utils.ImageQualityHint;
 import tdl.record.screen.video.VideoRecorder;
 import tdl.record_upload.MonitoredBackgroundTask;
 
+import java.awt.*;
 import java.io.File;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -22,14 +23,15 @@ public class VideoRecordingThread extends Thread implements MonitoredBackgroundT
     private File recordingFile;
     private final VideoRecordingStatus videoRecordingStatus;
 
-    public VideoRecordingThread(File videoRecordingFile) {
+    public VideoRecordingThread(File videoRecordingFile, GraphicsDevice screenDevice) {
         super("VideoRec");
         this.recordingFile = videoRecordingFile;
 
+        InputFromScreen imageSource = new InputFromScreen(screenDevice);
         VideoRecordingMetricsCollector videoRecordingMetricsCollector = new VideoRecordingMetricsCollector();
         videoRecordingStatus = new VideoRecordingStatus(videoRecordingMetricsCollector);
         videoRecorder = new VideoRecorder
-                .Builder(new ScaleToOptimalSizeImage(ImageQualityHint.MEDIUM, new InputFromScreen()))
+                .Builder(new ScaleToOptimalSizeImage(ImageQualityHint.MEDIUM, imageSource))
                 .withRecordingListener(videoRecordingMetricsCollector)
                 .build();
     }

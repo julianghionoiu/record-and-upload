@@ -14,6 +14,7 @@ import tdl.record_upload.sourcecode.SourceCodeRecordingThread;
 import tdl.record_upload.upload.BackgroundRemoteSyncTask;
 import tdl.record_upload.upload.NoOpDestination;
 import tdl.record_upload.upload.UploadStatsProgressStatus;
+import tdl.record_upload.userinteraction.ScreenDeviceSelection;
 import tdl.record_upload.video.NoOpVideoThread;
 import tdl.record_upload.video.VideoRecordingThread;
 import tdl.s3.credentials.AWSSecretProperties;
@@ -22,6 +23,7 @@ import tdl.s3.sync.destination.DestinationOperationException;
 import tdl.s3.sync.destination.S3BucketDestination;
 import tdl.s3.sync.progress.UploadStatsProgressListener;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -133,7 +135,24 @@ public class RecordAndUploadApp {
                         params.localStorageFolder,
                         String.format("screencast_%s.mp4", timestamp)
                 ).toFile();
-                videoRecordingTask = new VideoRecordingThread(screenRecordingFile);
+
+                GraphicsDevice screenDeviceToRecord;
+                int numDisplays = ScreenDeviceSelection.numDisplays();
+                if (numDisplays < 1) {
+                    throw new IllegalArgumentException("No screen devices found");
+                }
+
+                screenDeviceToRecord = ScreenDeviceSelection.getScreenDevices()[0];
+                // Choose screen in case multiple displays are available
+                if (numDisplays > 1) {
+                    GraphicsDevice[] allDisplays = ScreenDeviceSelection.getScreenDevices();
+                    int selectedScreenNumber = ScreenDeviceSelection.askUserToSelectScreen(allDisplays);
+                    screenDeviceToRecord = allDisplays[selectedScreenNumber];
+                }
+
+                Rectangle screenBounds = screenDeviceToRecord.getDefaultConfiguration().getBounds();
+                log.info("Recording screen size: " + screenBounds.width + "x" + screenBounds.height);
+                videoRecordingTask = new VideoRecordingThread(screenRecordingFile, screenDeviceToRecord);
             } else {
                 videoRecordingTask = new NoOpVideoThread();
             }
