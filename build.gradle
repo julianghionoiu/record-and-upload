@@ -1,31 +1,19 @@
-//~~~~ Settings for Gradle
-buildscript {
-    repositories {
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
-        jcenter()
-    }
-    dependencies {
-        classpath 'ch.netzwerg:gradle-release-plugin:1.2.4'
-        classpath 'org.kordamp.gradle:jdeps-gradle-plugin:0.4.1'
-        classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.2'
-    }
+
+plugins {
+    // Ref here: https://docs.gradle.org/7.4.1/userguide/publishing_setup.html
+    id 'application'
+    id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
-apply plugin: 'java'
-apply plugin: 'application'
-apply plugin: 'org.kordamp.jdeps'
-
-group 'ro.ghionoiu'
-
-//noinspection GroovyUnusedAssignment
-targetCompatibility = JavaVersion.VERSION_1_8
-//noinspection GroovyUnusedAssignment
 sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+group = 'ro.ghionoiu'
+version = project.version.toString()
+
 
 repositories {
-    jcenter()
+    mavenCentral()
     mavenLocal()
 }
 
@@ -60,29 +48,31 @@ ext {
 }
 
 dependencies {
-    compile ('ro.ghionoiu:dev-sourcecode-record:0.0.23') {
+    implementation ('ro.ghionoiu:dev-sourcecode-record:0.0.25') {
         exclude group: 'com.beust', module: 'jcommander'
         exclude group: 'org.apache.httpcomponents'
     }
-    compile ('ro.ghionoiu:dev-screen-record:0.0.11') {
+    implementation ('ro.ghionoiu:dev-screen-record:0.0.13') {
         exclude group: 'com.beust', module: 'jcommander'
         exclude group: 'org.apache.httpcomponents'
     }
-    compile ('ro.ghionoiu:s3-sync-stream:0.0.14') {
+    implementation ('ro.ghionoiu:s3-sync-stream:0.0.15') {
         exclude group: 'com.beust', module: 'jcommander'
     }
-    compile 'com.beust:jcommander:1.72'
-    compile 'org.eclipse.jetty:jetty-server:'+jettyVersion
-    compile 'org.eclipse.jetty:jetty-servlet:'+jettyVersion
-    compile 'org.fusesource.jansi:jansi:1.8'
+    implementation('com.beust:jcommander:1.72')
+    implementation('org.eclipse.jetty:jetty-server:'+jettyVersion)
+    implementation('org.eclipse.jetty:jetty-servlet:'+jettyVersion)
+    implementation('org.fusesource.jansi:jansi:1.8')
+    implementation('com.amazonaws:aws-java-sdk-s3:1.11.127')
 
-    compile 'org.slf4j:slf4j-api:1.7.25'
-    compile 'ch.qos.logback:logback-classic:1.1.3'
+    implementation('org.slf4j:slf4j-api:1.7.25')
+    implementation('ch.qos.logback:logback-classic:1.1.3')
 
     // Add the OS specific binaries
+    implementation 'io.humble:humble-video-noarch:'+humbleVideoVersion
     if (humbleVideoBundleName != "unset") {
         println 'Native video library humble-video '+humbleVideoBundleName+' - '+humbleVideoVersion+' will be bundled with the jar'
-        compile 'io.humble:humble-video-arch-'+humbleVideoBundleName+':'+humbleVideoVersion
+        implementation 'io.humble:humble-video-arch-'+humbleVideoBundleName+':'+humbleVideoVersion
         archivesBaseName = archivesBaseName + "-" + videoArch
     }
 
@@ -94,24 +84,46 @@ dependencies {
     // Java 11 and higher:
     //      Error occurred during initialization of boot layer
     //      java.lang.module.FindException: Module java.xml.bind not found
-    compile 'javax.xml.bind:jaxb-api:2.2.11'
-    compile 'javax.activation:activation:1.1.1'
+    implementation('javax.xml.bind:jaxb-api:2.2.11')
+    implementation('javax.activation:activation:1.1.1')
+    implementation('org.apache.commons:commons-io:1.3.2')
 
-    testCompile('junit:junit:4.11'){
-        exclude group: 'org.hamcrest', module: 'hamcrest-core'
-    }
+    testImplementation('org.junit.jupiter:junit-jupiter:5.9.1')
+    testImplementation('org.junit.platform:junit-platform-suite:1.8.1')
+    testImplementation 'org.hamcrest:hamcrest-all:1.3'
+    testImplementation 'org.mockito:mockito-core:4.11.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:4.11.0'
 
-    testCompile('com.github.stefanbirkner:system-rules:1.16.0')
-
-    testCompile 'org.hamcrest:hamcrest-core:1.3'
-    testCompile 'org.hamcrest:hamcrest-library:1.3'
-    testCompile 'com.mashape.unirest:unirest-java:1.4.9'
+    testImplementation 'org.hamcrest:hamcrest-core:1.3'
+    testImplementation 'org.hamcrest:hamcrest-library:1.3'
+    testImplementation 'com.mashape.unirest:unirest-java:1.4.9'
 }
 
-// ~~~~~ Packaging
+test {
+    useJUnitPlatform()
+    systemProperty("cucumber.junit-platform.naming-strategy", "long")
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
 
-// Fat Jar which has everything inside
-apply plugin: 'com.github.johnrengelman.shadow'
+mainClassName = "tdl.record_upload.RecordAndUploadApp"
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+// Suppress Javadoc warnings
+javadoc {
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
+
 shadowJar {
     manifest {
         attributes 'Main-Class': "$mainClassName"
@@ -120,57 +132,4 @@ shadowJar {
         attributes 'Humble-Native-App': "humble-video"
         attributes 'Humble-Native-Root': "."
     }
-}
-
-mainClassName = "tdl.record_upload.RecordAndUploadApp"
-jar {
-    manifest {
-        attributes "Main-Class": "$mainClassName"
-    }
-}
-
-// ~~~~~ Listing dependencies using jdeps
-// ~~~~~ See https://github.com/aalmiray/jdeps-gradle-plugin
-// CLI examples of getting similar reports:
-//   $ ./gradlew clean mavenCapsule                    <=== required to generate the uber jar
-//
-//   $ jdeps build/libs/record-and-upload-0.0.16-SNAPSHOT-capsule.jar
-//   $ jdeps -recursive -verbose build/libs/record-and-upload-0.0.16-SNAPSHOT-capsule.jar
-//   $ jdeps -cp 'build/classes/*' -verbose -profile -recursive build/libs/record-and-upload-0.0.16-SNAPSHOT-capsule.jar
-//   $ jdeps -recursive -profile -verbose build/libs/record-and-upload-0.0.16-SNAPSHOT-capsule.jar
-//   $ jdeps -I --api-only  --dot-output record-and-upload-deps  build/libs/record-and-upload-0.0.16-SNAPSHOT-capsule.jar
-//
-// Although 'jdeps' task, generates a more comprehensive report by going through the packages and modules of the project and also its direct dependencies
-
-// How to run manually, as it is disabled by default (skips gradle build cycle)?
-// 
-//    $ ./gradlew clean jdeps -PenableJdeps
-// or 
-// 
-//    $ ./gradlew clean build -PenableJdeps
-//
-// the above will include the 'jdeps' task as part of the gradle build cycle
-
-jdeps {
-    sourceSets = ['main', 'test']
-    configurations = ['testRuntime']
-    recursive = true
-    failOnError = false
-    consoleOutput = true
-    profile = true
-    verbose = true
-    jdkinternals = false
-
-    enabled = project.hasProperty("enableJdeps")
-}
-
-//~~~~~ Release management
-
-apply plugin: "ch.netzwerg.release"
-
-release {
-    dependsOn build // 'distZip' could e.g be used in combination with the 'application' plugin
-    push = false // 'true' would e.g. be useful when triggering the release task on a CI server
-    versionSuffix = '-SNAPSHOT' // '.DEV' or '' (empty) could be useful alternatives
-    tagPrefix = 'v' // 'r' or '' (empty) could be useful alternatives
 }

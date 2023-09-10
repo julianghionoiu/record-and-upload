@@ -1,23 +1,25 @@
 package tdl.record_upload;
 
 import com.mashape.unirest.http.Unirest;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 
 public class RecordAndUploadAppTest {
 
-    @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder();
+    @TempDir
+    Path tempFolder;
 
     @SuppressWarnings("SameParameterValue")
     public class MainAppThread extends Thread {
@@ -53,7 +55,7 @@ public class RecordAndUploadAppTest {
     @Test
     public void orchestratesMultipleThreads() throws Exception {
         // Prepare output folder
-        String storagePath = tempFolder.getRoot().getPath();
+        String storagePath = tempFolder.toString();
         System.out.println("Writing logs to "+storagePath);
 
         // Start the recording process
@@ -79,11 +81,11 @@ public class RecordAndUploadAppTest {
         appThread.join();
 
         // Assert on the generated log
-        File[] logFiles = tempFolder.getRoot().listFiles((dir, name) -> name.endsWith(".log"));
+        List<File> logFiles = Files.list(tempFolder).filter(path -> path.endsWith(".log")).map(path -> path.toFile()).collect(Collectors.toList());
         assertThat("Logs are generated and rotated before final upload",
-                Objects.requireNonNull(logFiles).length, is(2));
+                Objects.requireNonNull(logFiles).size(), is(2));
 
-        String logContents = readFile(logFiles[0]) + readFile(logFiles[1]);
+        String logContents = readFile(logFiles.get(0)) + readFile(logFiles.get(1));
         assertThat("starts the Main thread", logContents, containsString("[Main]"));
         assertThat("starts the Upload thread", logContents, containsString("[Upload]"));
         assertThat("starts the Metrics thread", logContents, containsString("[Metrics]"));

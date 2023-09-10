@@ -110,11 +110,9 @@ public class RecordAndUploadApp {
             if (syncFolder) {
                 AWSSecretProperties awsSecretProperties = AWSSecretProperties
                         .fromPlainTextFile(Paths.get(params.configFile));
-                uploadDestination = S3BucketDestination.builder()
-                        .awsClient(awsSecretProperties.createClient())
-                        .bucket(awsSecretProperties.getS3Bucket())
-                        .prefix(awsSecretProperties.getS3Prefix())
-                        .build();
+                uploadDestination = new S3BucketDestination(awsSecretProperties.createClient(),
+                        awsSecretProperties.getS3Bucket(),
+                        awsSecretProperties.getS3Prefix());
             } else {
                 uploadDestination = new NoOpDestination();
             }

@@ -1,7 +1,7 @@
 package tdl.record_upload;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 public class ManualRecordAndUploadAppTest {
 
@@ -22,7 +22,7 @@ public class ManualRecordAndUploadAppTest {
      *  - list the snapshots
      *  - convert the file to a git repo
      */
-    @Ignore("Manual acceptance")
+    @Disabled("Manual acceptance")
     @Test
     public void record_and_upload() {
     }
@@ -67,7 +67,7 @@ public class ManualRecordAndUploadAppTest {
      *  - you should see Starting messages, Metrics, Upload
      */
 
-    @Ignore("TODO write the test")
+    @Disabled("TODO write the test")
     @Test
     public void record_and_upload_X() {
     }
