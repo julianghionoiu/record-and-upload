@@ -16,10 +16,10 @@ echo "Should start after sometime (usually a long pause), if at all it starts"
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 docker run -it \
            --rm  \
-           --memory=4m \
-           --memory-reservation=4m \
+           --memory=20MB \
+           --memory-reservation=20MB \
            --volume ${PROJECT_ROOT_FOLDER}:/current-folder \
            --workdir /current-folder \
            java:8u111-jdk \
-           java -jar ./build/libs/record-and-upload-linux-0.0.21-SNAPSHOT-all.jar --config ./private/aws-test-secrets --store ./build/play
+           java -jar ./build/libs/record-and-upload-macos-all.jar --config ./.private/aws-test-secrets --store ./build/play
 
