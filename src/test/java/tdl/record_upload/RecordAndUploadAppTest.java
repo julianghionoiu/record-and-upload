@@ -22,9 +22,9 @@ public class RecordAndUploadAppTest {
     Path tempFolder;
 
     @SuppressWarnings("SameParameterValue")
-    public class MainAppThread extends Thread {
+    public static class MainAppThread extends Thread {
         static final String RECORDING_INTERFACE = "http://localhost:41375";
-        private String storageDirPath;
+        private final String storageDirPath;
 
         MainAppThread(String storageDirPath) {
             super("Main");
@@ -81,7 +81,7 @@ public class RecordAndUploadAppTest {
         appThread.join();
 
         // Assert on the generated log
-        List<File> logFiles = Files.list(tempFolder).filter(path -> path.endsWith(".log")).map(path -> path.toFile()).collect(Collectors.toList());
+        List<File> logFiles = Files.list(tempFolder).filter(path -> path.toString().endsWith(".log")).map(path -> path.toFile()).collect(Collectors.toList());
         assertThat("Logs are generated and rotated before final upload",
                 Objects.requireNonNull(logFiles).size(), is(2));
 
