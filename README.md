@@ -96,10 +96,12 @@ Note: In the above case, the test can be run in an environment with diskspace gr
 
 **Note:** `common-functions.sh` has be used in all the above scripts, contains common aspects of the test scripts.
 
-### To release
+### To build artifacts in Github
 
+Commit all changes then:
 ```bash
-./gradlew release
+export RELEASE_TAG="v$(cat gradle.properties | cut -d= -f2)"
+git tag -a "${RELEASE_TAG}" -m "${RELEASE_TAG}"
 git push --tags
 git push
 ```
